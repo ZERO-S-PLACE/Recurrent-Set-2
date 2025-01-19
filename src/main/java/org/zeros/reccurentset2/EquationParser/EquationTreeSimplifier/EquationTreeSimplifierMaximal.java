@@ -1,12 +1,15 @@
 package org.zeros.reccurentset2.EquationParser.EquationTreeSimplifier;
 
 import lombok.NonNull;
+import org.apache.commons.math3.complex.Complex;
 import org.springframework.stereotype.Component;
 import org.zeros.reccurentset2.EquationParser.EquationTreeNode.ConstantNode;
 import org.zeros.reccurentset2.EquationParser.EquationTreeNode.EquationTreeNode;
 import org.zeros.reccurentset2.EquationParser.EquationTreeNode.TwoFactorsNode;
-import org.zeros.reccurentset2.EquationParser.TwoFactorsCalculation.SubtractionCalculation;
-import org.zeros.reccurentset2.EquationParser.TwoFactorsCalculation.SumCalculation;
+import org.zeros.reccurentset2.EquationParser.EquationTreeNode.VariableNode;
+import org.zeros.reccurentset2.EquationParser.TwoFactorsCalculation.*;
+
+import java.util.function.Predicate;
 
 @Component
 public class EquationTreeSimplifierMaximal implements EquationTreeSimplifier {
@@ -36,16 +39,30 @@ public class EquationTreeSimplifierMaximal implements EquationTreeSimplifier {
     }
 
     private EquationTreeNode includeInVariable(EquationTreeNode node) {
-        //todo
-        if(node instanceof TwoFactorsNode) {
-            switch (((TwoFactorsNode)node).getCalculationCommand()) {
-                case SumCalculation sumCalculation->{
-                    return node;
 
+        if (node instanceof TwoFactorsNode) {
+            VariableNode variableNode = (VariableNode) node.getChildren().stream().filter(EquationTreeNode::isVariable)
+                    .findFirst().orElseThrow();
+            EquationTreeNode constantNode = node.getChildren().stream().filter(Predicate.not(EquationTreeNode::isVariable))
+                    .findFirst().orElseThrow();
+            switch (((TwoFactorsNode) node).getCalculationCommand()) {
+                case SumCalculation ignored -> {
+                    return includeOffset(variableNode, constantNode.getSolution());
                 }
-                case SubtractionCalculation subtractionCalculation->{
-
-                return node;
+                case SubtractionCalculation ignored -> {
+                    return includeOffset(variableNode, constantNode.getSolution().multiply(-1));
+                }
+                case DivisionCalculation ignored -> {
+                    return includeMultiplier(variableNode, Complex.ONE.divide(constantNode.getSolution()));
+                }
+                case MultiplicationCalculation ignored -> {
+                    return includeMultiplier(variableNode, constantNode.getSolution());
+                }
+                case PowerCalculation ignored -> {
+                    if(variableNode.getOffset()==null){
+                        return includePower(variableNode,constantNode.getSolution());
+                    }
+                    return node;
                 }
                 default -> {
                     return node;
@@ -54,4 +71,23 @@ public class EquationTreeSimplifierMaximal implements EquationTreeSimplifier {
         }
         return node;
     }
+
+    private EquationTreeNode includeOffset(VariableNode variableNode, Complex offset) {
+
+
+        variableNode.setOffset(offset);
+        return variableNode;
+    }
+    private EquationTreeNode includeMultiplier(VariableNode variableNode, Complex multiplier) {
+        variableNode.setMultiplier(multiplier);
+        return variableNode;
+    }
+    private EquationTreeNode includePower(VariableNode variableNode, Complex power) {
+        variableNode.setPower(power);
+        return variableNode;
+    }
+
+
+
+
 }

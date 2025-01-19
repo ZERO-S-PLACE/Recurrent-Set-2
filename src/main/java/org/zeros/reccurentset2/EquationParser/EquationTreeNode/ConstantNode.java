@@ -15,8 +15,6 @@ public class ConstantNode implements EquationTreeNode {
 
     private final Complex value;
 
-
-
     @Override
     public Complex getSolution() {
         return value;

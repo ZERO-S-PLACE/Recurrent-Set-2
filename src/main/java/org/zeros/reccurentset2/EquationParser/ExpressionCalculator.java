@@ -15,9 +15,13 @@ public class ExpressionCalculator {
     private final EquationTreeNode equationTree;
 
     private final Map<String, Set<VariableNode>> variables;
+    private int count=0;
 
     public Complex compute(Map<String, Complex> variablesValues) {
-        insertVariables(variablesValues);
+        if(count==0) {
+            insertVariables(variablesValues);
+            count++;
+        }
         return equationTree.getSolution();
     }
 

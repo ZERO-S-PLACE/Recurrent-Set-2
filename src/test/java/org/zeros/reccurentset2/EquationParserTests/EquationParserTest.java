@@ -129,7 +129,7 @@ public class EquationParserTest {
         Field field = ExpressionCalculator.class.getDeclaredField("equationTree");
         field.setAccessible(true);
         ExpressionCalculator expressionCalculator=creator.getExpressionCalculator(
-                "5/32-44*(4^3)+(26+i)",
+                "5/32-44*(4^3)+(26+i)+2+1+2+1-2-1-2-1",
                 Set.of());
         assertThat(expressionCalculator).isNotNull();
         Complex valueFromCalculator=expressionCalculator.compute
@@ -145,7 +145,7 @@ public class EquationParserTest {
                 .isCloseTo(valueExpected.getReal(), Offset.offset(maxDivergence));
         assertThat(valueFromCalculator.getImaginary())
                 .isCloseTo(valueExpected.getImaginary(), Offset.offset(maxDivergence));
-        //assertThat(equationTree instanceof ConstantNode).isTrue();
+        assertThat(equationTree instanceof ConstantNode).isTrue();
     }
     /*
     @Test

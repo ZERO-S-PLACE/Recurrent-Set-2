@@ -31,7 +31,7 @@ public class ExpressionCalculatorCreator {
      */
 
 
-    private final CharactersValues charactersValues;
+
     private final EquationTreeSimplifier equationTreeSimplifier;
     private  Set<String> variableNames;
     private  Map<String, Set<VariableNode>> variablesInTree;
@@ -102,7 +102,7 @@ public class ExpressionCalculatorCreator {
         }else {
             subExpressionReplacements.put(replacementName,
                     new OneFactorNode(parseExpression(innerExpression),
-                            charactersValues.FUNCTIONS_CALCULATORS.get(functionName)
+                            CharactersValues.FUNCTIONS_CALCULATORSget(functionName)
                             ));
         }
 
@@ -154,7 +154,7 @@ public class ExpressionCalculatorCreator {
                 return new TwoFactorsNode(
                         findValueOfExpressionWithoutPowers(expression.substring(0,lastPlusMinusSignIndex)),
                         findValueOfMultiplicationDivisionExpression(expression.substring(lastPlusMinusSignIndex+1)),
-                        charactersValues.OPERATORS_CALCULATORS.get(sign)
+                        CharactersValues.OPERATORS_CALCULATORSget(sign)
                 );
         }
         return findValueOfMultiplicationDivisionExpression(expression);
@@ -173,7 +173,7 @@ public class ExpressionCalculatorCreator {
             return new TwoFactorsNode(
                     findValue(expression.substring(0,firstMultiplyDivideSignIndex)),
                     findValueOfMultiplicationDivisionExpression(expression.substring(firstMultiplyDivideSignIndex+1)),
-                    charactersValues.OPERATORS_CALCULATORS.get(sign)
+                    CharactersValues.OPERATORS_CALCULATORSget(sign)
             );
         }
         return findValue(expression);
@@ -198,7 +198,7 @@ public class ExpressionCalculatorCreator {
             subExpressionReplacements.put(replacementName,
                     new TwoFactorsNode(findValue(baseOfPower),
                             findValue(exponent),
-                            charactersValues.OPERATORS_CALCULATORS.get("^")
+                            CharactersValues.OPERATORS_CALCULATORSget("^")
                     ));
 
         return simplifiedExpression;
@@ -281,27 +281,27 @@ public class ExpressionCalculatorCreator {
             return new TwoFactorsNode(
                     subExpressionReplacements.get(replacement),
                     findValue(partAfter),
-                    charactersValues.OPERATORS_CALCULATORS.get("*"));
+                    CharactersValues.OPERATORS_CALCULATORSget("*"));
         }
         if(partAfter.isBlank()){
             return new TwoFactorsNode(
                     findValue(partBefore),
                     subExpressionReplacements.get(replacement),
-                    charactersValues.OPERATORS_CALCULATORS.get("*"));
+                    CharactersValues.OPERATORS_CALCULATORSget("*"));
         }
         return new TwoFactorsNode(
                 new TwoFactorsNode(
                         findValue(partBefore),
                         subExpressionReplacements.get(replacement),
-                        charactersValues.OPERATORS_CALCULATORS.get("*"))
+                        CharactersValues.OPERATORS_CALCULATORSget("*"))
                 , findValue(partAfter),
-                charactersValues.OPERATORS_CALCULATORS.get("*"));
+                CharactersValues.OPERATORS_CALCULATORSget("*"));
     }
 
     private EquationTreeNode findValueContainingConstant(String expression) {
         if(equalsAny(expression,AllowedCharacters.CONSTANT))
         {
-            return new ConstantNode(charactersValues.CONSTANT_VALUES.get(expression));
+            return new ConstantNode(CharactersValues.CONSTANT_VALUES.get(expression));
         }
         String constant = findFirstMatchingElement(expression,AllowedCharacters.CONSTANT);
         int startIndex= expression.indexOf(constant);
@@ -309,23 +309,23 @@ public class ExpressionCalculatorCreator {
         String partAfter= expression.substring(startIndex+constant.length());
         if(partBefore.isBlank()){
             return new TwoFactorsNode(
-                    new ConstantNode(charactersValues.CONSTANT_VALUES.get(constant)),
+                    new ConstantNode(CharactersValues.CONSTANT_VALUES.get(constant)),
                     findValue(partAfter),
-                    charactersValues.OPERATORS_CALCULATORS.get("*"));
+                    CharactersValues.OPERATORS_CALCULATORSget("*"));
         }
         if(partAfter.isBlank()){
             return new TwoFactorsNode(
                     findValue(partBefore),
-                    new ConstantNode(charactersValues.CONSTANT_VALUES.get(constant)),
-                    charactersValues.OPERATORS_CALCULATORS.get("*"));
+                    new ConstantNode(CharactersValues.CONSTANT_VALUES.get(constant)),
+                    CharactersValues.OPERATORS_CALCULATORSget("*"));
         }
         return new TwoFactorsNode(
                 new TwoFactorsNode(
                         findValue(partBefore),
-                        new ConstantNode(charactersValues.CONSTANT_VALUES.get(constant)),
-                        charactersValues.OPERATORS_CALCULATORS.get("*"))
+                        new ConstantNode(CharactersValues.CONSTANT_VALUES.get(constant)),
+                        CharactersValues.OPERATORS_CALCULATORSget("*"))
                 , findValue(partAfter),
-                charactersValues.OPERATORS_CALCULATORS.get("*"));
+                CharactersValues.OPERATORS_CALCULATORSget("*"));
     }
 
     private EquationTreeNode findValueContainingVariable(String expression) {
@@ -341,21 +341,21 @@ public class ExpressionCalculatorCreator {
             return new TwoFactorsNode(
                     createVariableNode(variable),
                     findValue(partAfter),
-                    charactersValues.OPERATORS_CALCULATORS.get("*"));
+                    CharactersValues.OPERATORS_CALCULATORSget("*"));
         }
         if(partAfter.isBlank()){
             return new TwoFactorsNode(
                     findValue(partBefore),
                     createVariableNode(variable),
-                    charactersValues.OPERATORS_CALCULATORS.get("*"));
+                    CharactersValues.OPERATORS_CALCULATORSget("*"));
         }
         return new TwoFactorsNode(
                 new TwoFactorsNode(
                         findValue(partBefore),
                         createVariableNode(variable),
-                        charactersValues.OPERATORS_CALCULATORS.get("*"))
+                        CharactersValues.OPERATORS_CALCULATORSget("*"))
                 , findValue(partAfter),
-                charactersValues.OPERATORS_CALCULATORS.get("*"));
+                CharactersValues.OPERATORS_CALCULATORSget("*"));
     }
 
     private VariableNode createVariableNode(String variableName) {

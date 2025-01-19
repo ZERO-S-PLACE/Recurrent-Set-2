@@ -54,6 +54,15 @@ public class VariableNode implements EquationTreeNode {
                 ? offset
                 : this.offset.add(offset);
     }
+    public void setPower(Complex exponent) {
+        this.exponent = (this.exponent == null)
+                ? exponent
+                : this.exponent.multiply(exponent);
+        this.multiplier = (this.multiplier == null)
+                ? null
+                : this.multiplier.pow(multiplier);
+    }
+
 
 
 }

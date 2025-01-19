@@ -26,7 +26,7 @@ public class ParserPerformanceTests {
             Set.of("a"," x"));
 
     for (int i = 0; i < 10000; i++) {
-        for (int j = 0; j < 1000; j++) {
+        for (int j = 0; j < 2000; j++) {
            customCalculatorResults.add(expressionCalculator.compute(
                     Map.of("a",new Complex(i,j),
                     "x",new Complex(j,i))));
@@ -40,7 +40,7 @@ public class ParserPerformanceTests {
 
 
     for (int i = 0; i < 10000; i++) {
-        for (int j = 0; j < 1000; j++) {
+        for (int j = 0; j < 2000; j++) {
             Complex x=new Complex(j,i);
             Complex a=new Complex(i,j);
            defaultCalculatorResults.add(
@@ -60,4 +60,47 @@ public class ParserPerformanceTests {
 
 
 }
+    @Test
+    public void testParserPerformanceMandelbrot() {
+
+
+        long start2 = System.currentTimeMillis();
+
+        for (int i = 0; i < 2000; i++) {
+            for (int j = 0; j < 1000; j++) {
+                Complex z=Complex.ZERO;
+                Complex p=new Complex(i,j).multiply(0.001);
+                for (int k = 0; k < 100; k++) {
+                    z=z.pow(2).add(p);
+                }
+            }
+        }
+        long end2 = System.currentTimeMillis();
+        System.out.println("Elapsed time -default parsed: " + (end2 - start2));
+
+        ExpressionCalculator expressionCalculator=creator.getExpressionCalculator(
+                "z^2+p",
+                Set.of("p"," z"));
+        long start = System.currentTimeMillis();
+        for (int i = 0; i < 2000; i++) {
+            for (int j = 0; j < 1000; j++) {
+                Complex z=Complex.ZERO;
+                Complex p=new Complex(i,j).multiply(0.001);
+                for (int k = 0; k < 100; k++) {
+                    z=expressionCalculator.compute(
+                            Map.of("p", p,
+                                    "z",z));
+                }
+            }
+        }
+        long end = System.currentTimeMillis();
+        System.out.println("Elapsed time -custom parsed: " + (end - start));
+
+
+        System.out.println("Coefficient: " + (double)(end-start)/(end2 - start2));
+
+
+    }
 }
+
+
