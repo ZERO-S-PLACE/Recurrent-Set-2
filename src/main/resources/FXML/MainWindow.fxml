@@ -14,9 +14,9 @@
 
     <center>
         <AnchorPane BorderPane.alignment="CENTER">
-            <ScrollPane fx:id="mainImageContainer" hbarPolicy="ALWAYS" vbarPolicy="ALWAYS" AnchorPane.bottomAnchor="0.0"
+            <AnchorPane fx:id="mainImageContainer"  AnchorPane.bottomAnchor="0.0"
                         AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-            </ScrollPane>
+            </AnchorPane>
         </AnchorPane>
     </center>
     <bottom>

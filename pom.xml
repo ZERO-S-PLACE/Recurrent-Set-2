@@ -107,7 +107,11 @@
 			<artifactId>mysql-connector-j</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-
+		<dependency>
+			<groupId>ch.obermuhlner</groupId>
+			<artifactId>big-math</artifactId>
+			<version>2.3.2</version> 
+		</dependency>
 
 		<dependency>
 			<groupId>org.hibernate.validator</groupId>

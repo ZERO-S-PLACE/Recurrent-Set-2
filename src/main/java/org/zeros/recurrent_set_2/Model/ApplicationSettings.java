@@ -19,13 +19,13 @@ public class ApplicationSettings {
     String name;
     @NonNull
     @Builder.Default
-    private Integer iterations = 1000;
+    private Integer iterations = 500;
     @NonNull
     @Builder.Default
     private Integer iterationsPreView = 100;
     @NonNull
     @Builder.Default
-    private Integer minIterationsSatisfiedToBeVisible = 10;
+    private Integer minIterationsSatisfiedToBeVisible = 1;
     @NonNull
     @Builder.Default
     private Integer exportHeight = 1795;
@@ -34,10 +34,10 @@ public class ApplicationSettings {
     private Integer exportWidth = 2551;
     @NonNull
     @Builder.Default
-    private Integer numberOfThreads = 24;
+    private Integer numberOfThreads = Runtime.getRuntime().availableProcessors();
     @NonNull
     @Builder.Default
-    private Integer smallestChunkBorderSize = 50;
+    private Integer smallestChunkBorderSize = 30;
 
 
     @Transient

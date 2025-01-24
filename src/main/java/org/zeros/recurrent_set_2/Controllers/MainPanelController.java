@@ -26,7 +26,7 @@ public class MainPanelController implements Initializable {
     @FXML
     public AnchorPane leftPane;
     @FXML
-    public ScrollPane mainImageContainer;
+    public AnchorPane mainImageContainer;
     @FXML
     public AnchorPane bottomPane;
 
@@ -36,7 +36,12 @@ public class MainPanelController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-            ImageView imageView = new ImageView(imageGenerationController.getNewImage(RecurrentExpression.MANDELBROT, 2000, 1400));
-            mainImageContainer.contentProperty().set(imageView);
+        mainImageContainer.setOnMouseClicked(event -> generateImage(RecurrentExpression.MANDELBROT));
+    }
+    public void generateImage(RecurrentExpression recurrentExpression) {
+        ImageView imageView = new ImageView(imageGenerationController.getNewImage(recurrentExpression,
+                (int)mainImageContainer.getWidth(),
+                (int) mainImageContainer.getHeight()));
+        mainImageContainer.getChildren().add(imageView);
     }
 }
