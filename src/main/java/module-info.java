@@ -11,10 +11,15 @@ module ReccurentSet {
     requires spring.context;
     requires micrometer.observation;
     requires spring.beans;
+    requires jakarta.persistence;
+    requires jakarta.validation;
 
     exports org.zeros.recurrent_set_2;
     exports org.zeros.recurrent_set_2.Controllers;
     exports org.zeros.recurrent_set_2.Views;
+    exports org.zeros.recurrent_set_2.Configuration;
+    exports org.zeros.recurrent_set_2.ImageGeneration;
+    exports org.zeros.recurrent_set_2.Model;
     exports org.zeros.recurrent_set_2.EquationParser;
     exports org.zeros.recurrent_set_2.EquationParser.EquationTreeNode;
     exports org.zeros.recurrent_set_2.EquationParser.EquationTreeSimplifier;
@@ -22,6 +27,5 @@ module ReccurentSet {
     exports org.zeros.recurrent_set_2.EquationParser.TwoFactorsCalculation;
 
     opens org.zeros.recurrent_set_2 to spring.core, spring.context, javafx.graphics;
-    exports org.zeros.recurrent_set_2.ImageGeneration;
     opens org.zeros.recurrent_set_2.ImageGeneration to javafx.graphics, spring.context, spring.core;
 }
