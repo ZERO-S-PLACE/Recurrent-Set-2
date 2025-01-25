@@ -1,17 +1,15 @@
 package org.zeros.recurrent_set_2.Controllers;
 
-import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.ScrollPane;
+import javafx.geometry.Pos;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.PixelWriter;
-import javafx.scene.image.WritableImage;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.paint.Color;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.BorderPane;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.zeros.recurrent_set_2.ImageGeneration.BoundaryGradientColors;
+import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
 import org.zeros.recurrent_set_2.ImageGeneration.ImageGenerationController;
 import org.zeros.recurrent_set_2.Model.RecurrentExpression;
 
@@ -21,27 +19,39 @@ import java.util.ResourceBundle;
 @Component
 @RequiredArgsConstructor
 public class MainPanelController implements Initializable {
+
     @FXML
-    public AnchorPane topPane;
-    @FXML
-    public AnchorPane leftPane;
-    @FXML
-    public AnchorPane mainImageContainer;
-    @FXML
-    public AnchorPane bottomPane;
+    public BorderPane mainImageContainer;
+
+    public ImageView mainImage;
 
     private final ImageGenerationController imageGenerationController;
-
+    private final SettingsHolder settingsHolder;
 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        mainImageContainer.setOnMouseClicked(event -> generateImage(RecurrentExpression.MANDELBROT));
+        mainImageContainer.setOnMouseClicked(event -> generateImage(RecurrentExpression.X_SHAPE));
+        mainImageContainer.setBackground(new Background(new BackgroundFill(settingsHolder.getColorSettings().getBackgroundColor(), null, null)));
     }
+
+
     public void generateImage(RecurrentExpression recurrentExpression) {
-        ImageView imageView = new ImageView(imageGenerationController.getNewImage(recurrentExpression,
-                (int)mainImageContainer.getWidth(),
-                (int) mainImageContainer.getHeight()));
-        mainImageContainer.getChildren().add(imageView);
+        if (mainImage == null) {
+            mainImage = new ImageView(imageGenerationController.getNewImage(recurrentExpression,
+                    (int) mainImageContainer.getWidth(),
+                    (int) mainImageContainer.getHeight()));
+
+
+            mainImageContainer.setCenter(mainImage);
+            mainImage.setPreserveRatio(true);
+            mainImage.setSmooth(true);
+            BorderPane.setAlignment(mainImage, Pos.CENTER);
+        } else {
+            mainImage.setImage(imageGenerationController.getNewImage(recurrentExpression,
+                    (int) mainImageContainer.getWidth(),
+                    (int) mainImageContainer.getHeight()));
+        }
     }
 }
+

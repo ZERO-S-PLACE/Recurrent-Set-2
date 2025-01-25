@@ -34,10 +34,10 @@ public class ApplicationSettings {
     private Integer exportWidth = 2551;
     @NonNull
     @Builder.Default
-    private Integer numberOfThreads = Runtime.getRuntime().availableProcessors();
+    private Integer numberOfThreads = 12;
     @NonNull
     @Builder.Default
-    private Integer smallestChunkBorderSize = 30;
+    private Integer smallestChunkBorderSize =20;
 
 
     @Transient

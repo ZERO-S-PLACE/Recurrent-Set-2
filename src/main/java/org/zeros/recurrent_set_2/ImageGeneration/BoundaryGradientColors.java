@@ -24,10 +24,10 @@ public class BoundaryGradientColors {
         gradientColors= new HashMap<>();
         gradientColorsArgb = new HashMap<>();
         createGradientFromSettings();
-        magGradientToArgb();
+        mapGradientToArgb();
     }
 
-    private void magGradientToArgb() {
+    private void mapGradientToArgb() {
         gradientColors.forEach((key, value) ->
                 gradientColorsArgb.put(key,mapColorToArgb(value)));
     }

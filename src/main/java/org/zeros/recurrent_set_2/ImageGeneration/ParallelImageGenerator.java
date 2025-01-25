@@ -11,7 +11,7 @@ import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
-
+/*
 @Builder
 public class ParallelImageGenerator extends RecursiveAction {
 
@@ -20,7 +20,7 @@ public class ParallelImageGenerator extends RecursiveAction {
     private final int columnsStart;
     private final int columnsEnd;
     private final Complex topLeftPoint;
-    private final double pixelToUnit;
+    private final double unitsPerPixel;
     private final WritableImage writableImage;
     private final BoundaryGradientColors boundaryGradientColors;
     private final SettingsHolder settingsHolder;
@@ -34,7 +34,7 @@ public class ParallelImageGenerator extends RecursiveAction {
         for (int row = rowsStart; row < rowsEnd; row++) {
             int[] iterationsSatisfied = new int[columnsEnd - columnsStart];
             for (int column = columnsStart; column < columnsEnd; column++) {
-                Complex p = topLeftPoint.add(new Complex(column, row).multiply(pixelToUnit));
+                Complex p = getPointFromPixel(column, row);
                int iterationsSatisfiedAtCell= getSatisfiedOperations(p);
                 iterationsSatisfied[column - columnsStart] =iterationsSatisfiedAtCell;
                 if(iterationsSatisfiedAtCell==settingsHolder.getApplicationSettings().getIterations()){
@@ -46,6 +46,10 @@ public class ParallelImageGenerator extends RecursiveAction {
         recomputePoints(pointsToRecompute);
         System.out.println("..end");
 
+    }
+
+    private Complex getPointFromPixel(int column, int row) {
+        return topLeftPoint.add(new Complex(column, row).multiply(unitsPerPixel));
     }
 
     private void recomputePoints(Map<Point2D, Complex> pointsToRecompute) {
@@ -89,3 +93,4 @@ public class ParallelImageGenerator extends RecursiveAction {
         });
     }
 }
+*/

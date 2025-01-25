@@ -8,10 +8,13 @@ import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
 import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculator;
 import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorCreator;
 import org.zeros.recurrent_set_2.Model.RecurrentExpression;
+import org.zeros.recurrent_set_2.Model.ViewLocation;
 
 import java.util.ArrayList;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class ImageGenerationController {
@@ -32,60 +35,102 @@ public class ImageGenerationController {
     }
 
     public WritableImage getNewImage(RecurrentExpression expression, int width, int height) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
         WritableImage image = new WritableImage(width, height);
         imageProperty.set(image);
         this.recurrentExpression = expression;
-        initializeCalculatorsPools(expression);
-        new Thread(() -> {
-            generateNewImage(width, height);
-        }).start();
+        executor.submit(() -> generateNewImage(width, height, expression.getDefaultViewLocation()));
+        executor.shutdown();
+
+        //FOR TEST ONLY
+        /*try {
+            executor.awaitTermination(12,TimeUnit.DAYS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }*/
         return imageProperty.get();
     }
 
-    private void initializeCalculatorsPools(RecurrentExpression expression) {
-        for (int i = 0; i < settingsHolder.getApplicationSettings().getNumberOfThreads(); i++) {
-            recurrentExpressionCalculators.add(calculatorCreator.getExpressionCalculator(expression.recurrentExpression, expression.getVariableNames()));
-            firstExpressionCalculators.add(calculatorCreator.getExpressionCalculator(expression.firstExpression, expression.getVariableNames()));
+    private void initializeCalculatorsPools(RecurrentExpression expression, int poolSize) {
+        for (int i = 0; i < poolSize; i++) {
+            recurrentExpressionCalculators.add(calculatorCreator.getExpressionCalculator(expression.getRecurrentExpression(), expression.getVariableNames()));
+            firstExpressionCalculators.add(calculatorCreator.getExpressionCalculator(expression.getFirstExpression(), expression.getVariableNames()));
         }
     }
 
-    private void generateNewImage(int width, int height) {
+    private void generateNewImage(int width, int height, ViewLocation location) {
+        int columnsCount = (int) ((width * Math.sqrt(settingsHolder.getApplicationSettings().getNumberOfThreads())) / height);
+        int rowsCount = settingsHolder.getApplicationSettings().getNumberOfThreads() / columnsCount;
+        initializeCalculatorsPools(recurrentExpression, rowsCount * columnsCount);
+        ExecutorService executorService = Executors.newFixedThreadPool(columnsCount * rowsCount);
+        AtomicInteger counter = new AtomicInteger(0);
 
-        ForkJoinPool pool = new ForkJoinPool();
-        int collumnsCount = (int) Math.sqrt(settingsHolder.getApplicationSettings().getNumberOfThreads());
-        int rowsCount = settingsHolder.getApplicationSettings().getNumberOfThreads() / collumnsCount;
-        for (int column = 0; column < collumnsCount; column++) {
+        for (int column = 0; column < columnsCount; column++) {
+
             for (int row = 0; row < rowsCount; row++) {
-                pool.execute(ParallelImageGeneratorChunkComputation.builder()
-                        .boundaryGradientColors(boundaryGradientColors)
-                        .imageChunk(ImageChunk.builder()
-                                .columnsEnd((column + 1) * width / (collumnsCount + 1))
-                                .columnsStart(column * width / (collumnsCount + 1))
-                                .rowsEnd((row + 1) * height / (row + 1))
-                                .rowsStart(row * height / (row + 1))
-                                .build())
-                        .writableImage(imageProperty.get())
-                        .settingsHolder(settingsHolder)
-                                .iterations(settingsHolder.getApplicationSettings().getIterations())
-                        .recurentExpressionCalculator(recurrentExpressionCalculators.get(column * rowsCount + row))
-                        .firstExpressionCalculator(firstExpressionCalculators.get(column * rowsCount + row))
-                        .pixelToUnit((recurrentExpression.getInitialRangeMax() -
-                                recurrentExpression.getInitialRangeMin()) / width)
-                        .topLeftPoint(new Complex(recurrentExpression.getInitialRangeMin(),
-                                -1.5))
-                        .build());
-
+                int rowCurrent = row;
+                int columnCurrent = column;
+                counter.incrementAndGet();
+                executorService.submit(() -> {
+                    int columnWidth = width / columnsCount;
+                    int rowHeight = height / rowsCount;
+                    double unitsPerPixel = getUnitsPerPixel(width, location);
+                    ParallelImageGeneratorChunkComputation.builder()
+                            .boundaryGradientColors(boundaryGradientColors)
+                            .imageChunk(ImageChunk.builder()
+                                    .columnsEnd((columnCurrent + 1) * columnWidth)
+                                    .columnsStart(columnCurrent * columnWidth)
+                                    .rowsEnd((rowCurrent + 1) * rowHeight)
+                                    .rowsStart(rowCurrent * rowHeight)
+                                    .build())
+                            .writableImage(imageProperty.get())
+                            .executorService(executorService)
+                            .counter(counter)
+                            .settingsHolder(settingsHolder)
+                            .iterations(settingsHolder.getApplicationSettings().getIterations())
+                            .recurentExpressionCalculator(recurrentExpressionCalculators.get(columnCurrent * rowsCount + rowCurrent))
+                            .firstExpressionCalculator(firstExpressionCalculators.get(columnCurrent * rowsCount + rowCurrent))
+                            .unitsPerPixel(unitsPerPixel)
+                            .topLeftPoint(location.getCenterPoint().add(new Complex(
+                                    unitsPerPixel * ((double) -width / 2),
+                                    unitsPerPixel * ((double) height / 2))))
+                            .build()
+                            .compute();
+                });
             }
         }
-        pool.shutdown();
+        int counterLast = 0;
+while (counter.get() >0) {
+    if(counterLast>counter.get()) {
+        System.out.println(counterLast);
+    }
+    counterLast=counter.get();
+    try {
+        Thread.sleep(100);
+    } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+    }
+}
+        executorService.shutdown();
+
         try {
-            pool.awaitTermination(10, TimeUnit.MINUTES);
+            executorService.awaitTermination(12,TimeUnit.DAYS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        System.out.println("Finished generating new image");
+
+    }
 
 
+    private static double getUnitsPerPixel(int width, ViewLocation location) {
+        return location.getHorizontalSpan() / width;
     }
 
 
 }
+
+
+
+
+
