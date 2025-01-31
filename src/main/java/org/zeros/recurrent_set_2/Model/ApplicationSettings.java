@@ -1,12 +1,8 @@
 package org.zeros.recurrent_set_2.Model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.stereotype.Component;
 
 @Getter
 @Setter
@@ -19,7 +15,7 @@ public class ApplicationSettings {
     String name;
     @NonNull
     @Builder.Default
-    private Integer iterations = 500;
+    private Integer iterations = 200;
     @NonNull
     @Builder.Default
     private Integer iterationsPreView = 100;
@@ -37,12 +33,18 @@ public class ApplicationSettings {
     private Integer numberOfThreads = 12;
     @NonNull
     @Builder.Default
-    private Integer smallestChunkBorderSize =20;
+    private Integer minChunkBorderSize =20;
+    @NonNull
+    @Builder.Default
+    private Integer maxChunkBorderSize =300;
 
 
     @Transient
     public static final ApplicationSettings DEFAULT = ApplicationSettings.builder()
             .name("DEFAULT")
             .build();
+
+    @Transient
+    public static final double MAXIMAL_EXPRESSION_VALUE =2;
 
 }

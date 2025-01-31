@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.complex.Complex;
 import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
 import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculator;
+import org.zeros.recurrent_set_2.Model.ApplicationSettings;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -25,11 +26,10 @@ public class ParallelImageGeneratorChunkComputation {
     private final WritableImage writableImage;
     private final BoundaryGradientColors boundaryGradientColors;
     private final int iterations;
-    private final SettingsHolder settingsHolder;
+    private final int smallestChunkBorderSize;
     private final ExpressionCalculator recurentExpressionCalculator;
     private final ExpressionCalculator firstExpressionCalculator;
-    private final ExecutorService executorService;
-    private final AtomicInteger counter;
+
 
     /*
     ALGORITHM TO OPTIMIZE COMPUTATIONS:
@@ -56,12 +56,13 @@ public class ParallelImageGeneratorChunkComputation {
                 && Arrays.stream(imageChunkBorders.bottomBorder()).allMatch(value -> value == iterations)
                 && Arrays.stream(imageChunkBorders.leftBorder()).allMatch(value -> value == iterations)) {
             colorChunk(imageChunk, iterations);
-        } else if (Math.min(imageChunkBorders.rightBorder().length , imageChunkBorders.topBorder().length)  <= settingsHolder.getApplicationSettings().getSmallestChunkBorderSize()) {
+        } else if (Math.min(imageChunkBorders.rightBorder().length , imageChunkBorders.topBorder().length)
+                <= smallestChunkBorderSize) {
             computeAllPoints(imageChunk,imageChunkBorders);
         } else {
             divideAndCheckSubChunks(imageChunk, imageChunkBorders);
         }
-        counter.decrementAndGet();
+
     }
 
     private void divideAndCheckSubChunks(ImageChunk imageChunk, ImageChunkBorders imageChunkBorders) {
@@ -87,43 +88,40 @@ public class ParallelImageGeneratorChunkComputation {
         int[] bottomBorderRightPart = Arrays.copyOfRange(imageChunkBorders.bottomBorder(), divisionColumn - imageChunk.columnsStart(), imageChunkBorders.topBorder().length);
         //TOP LEFT CHUNK
 
-        counter.incrementAndGet();
-       executorService.submit(()->computeForChunk(new ImageChunk(imageChunk.rowsStart(),
+
+       computeForChunk(new ImageChunk(imageChunk.rowsStart(),
                         divisionRow,
                         imageChunk.columnsStart(),
                         divisionColumn),
                 new ImageChunkBorders(leftBorderUpperPart, middleBorderUpperPart,
-                        topBorderLeftPart, middleBorderLeftPart)));
+                        topBorderLeftPart, middleBorderLeftPart));
 
         //TOP RIGHT CHUNK
-        counter.incrementAndGet();
-        executorService.submit(()->computeForChunk(new ImageChunk(imageChunk.rowsStart(),
+       computeForChunk(new ImageChunk(imageChunk.rowsStart(),
                         divisionRow,
                         divisionColumn,
                         imageChunk.columnsEnd()),
                 new ImageChunkBorders(middleBorderUpperPart, rightBorderUpperPart,
                         topBorderRightPart, middleBorderRightPart)
-        ));
+        );
 
 
         //BOTTOM RIGHT CHUNK
-        counter.incrementAndGet();
-        executorService.submit(()->computeForChunk(new ImageChunk(divisionRow,
+       computeForChunk(new ImageChunk(divisionRow,
                         imageChunk.rowsEnd(),
                         divisionColumn,
                         imageChunk.columnsEnd()),
                 new ImageChunkBorders(middleBorderLowerPart, rightBorderLowePart,
-                        middleBorderRightPart, bottomBorderRightPart)));
+                        middleBorderRightPart, bottomBorderRightPart));
 
 
         //BOTTOM LEFT CHUNK
-        counter.incrementAndGet();
-        executorService.submit(()->computeForChunk(new ImageChunk(divisionRow,
+       computeForChunk(new ImageChunk(divisionRow,
                         imageChunk.rowsEnd(),
                         imageChunk.columnsStart(),
                         divisionColumn),
                 new ImageChunkBorders(leftBorderLowerPart, middleBorderLowerPart,
-                        middleBorderLeftPart, bottomBorderLeftPart)));
+                        middleBorderLeftPart, bottomBorderLeftPart));
 
     }
 
@@ -172,7 +170,7 @@ public class ParallelImageGeneratorChunkComputation {
         Complex z = firstExpressionCalculator.compute(Map.of("p", p));
         for (int i = 0; i < iterations; i++) {
             z = recurentExpressionCalculator.compute(Map.of("p", p, "z", z));
-            if (z.abs() > 2) {
+            if (z.abs() > ApplicationSettings.MAXIMAL_EXPRESSION_VALUE) {
                 return i;
             }
 

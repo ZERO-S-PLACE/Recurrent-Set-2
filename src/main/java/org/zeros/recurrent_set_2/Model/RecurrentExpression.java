@@ -71,4 +71,24 @@ public class RecurrentExpression {
                     .horizontalSpan(15.0)
                     .build())
             .build();
+
+    @Transient
+    public static RecurrentExpression X2_SHAPE =RecurrentExpression.builder()
+            .firstExpression("p")
+            .recurrentExpression("(sin(z)+cos(z))/(sin(z)*cos(z))")
+            .defaultViewLocation(ViewLocation.builder()
+                    .centerPoint(Complex.valueOf(0,1))
+                    .horizontalSpan(20.0)
+                    .build())
+            .build();
+
+    @Transient
+    public static RecurrentExpression X3_SHAPE =RecurrentExpression.builder()
+            .firstExpression("p")
+            .recurrentExpression("cos(sin(cos(sin(e))))*cos(sin(z))")
+            .defaultViewLocation(ViewLocation.builder()
+                    .centerPoint(Complex.ZERO)
+                    .horizontalSpan(5.0)
+                    .build())
+            .build();
 }

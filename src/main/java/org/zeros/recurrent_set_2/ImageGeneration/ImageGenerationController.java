@@ -2,6 +2,7 @@ package org.zeros.recurrent_set_2.ImageGeneration;
 
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.image.WritableImage;
+import lombok.Getter;
 import org.apache.commons.math3.complex.Complex;
 import org.springframework.stereotype.Component;
 import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
@@ -14,9 +15,9 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
+@Getter
 public class ImageGenerationController {
 
     private final ArrayList<ExpressionCalculator> recurrentExpressionCalculators = new ArrayList<>();
@@ -39,7 +40,11 @@ public class ImageGenerationController {
         WritableImage image = new WritableImage(width, height);
         imageProperty.set(image);
         this.recurrentExpression = expression;
-        executor.submit(() -> generateNewImage(width, height, expression.getDefaultViewLocation()));
+        executor.submit(() -> {
+           // generateNewImage(width, height, expression.getDefaultViewLocation(),settingsHolder.getApplicationSettings().getIterationsPreView());
+            generateNewImage(width, height, expression.getDefaultViewLocation(),settingsHolder.getApplicationSettings().getIterations());
+        }
+        );
         executor.shutdown();
 
         //FOR TEST ONLY
@@ -58,19 +63,20 @@ public class ImageGenerationController {
         }
     }
 
-    private void generateNewImage(int width, int height, ViewLocation location) {
-        int columnsCount = (int) ((width * Math.sqrt(settingsHolder.getApplicationSettings().getNumberOfThreads())) / height);
-        int rowsCount = settingsHolder.getApplicationSettings().getNumberOfThreads() / columnsCount;
+    private void generateNewImage(int width, int height, ViewLocation location,int iterations) {
+
+        int columnsCount = width/settingsHolder.getApplicationSettings().getMaxChunkBorderSize()+1;
+        int rowsCount = height/settingsHolder.getApplicationSettings().getMaxChunkBorderSize()+1;
+
         initializeCalculatorsPools(recurrentExpression, rowsCount * columnsCount);
-        ExecutorService executorService = Executors.newFixedThreadPool(columnsCount * rowsCount);
-        AtomicInteger counter = new AtomicInteger(0);
+        ExecutorService executorService = Executors.newWorkStealingPool(settingsHolder.getApplicationSettings().getNumberOfThreads());
 
         for (int column = 0; column < columnsCount; column++) {
 
             for (int row = 0; row < rowsCount; row++) {
                 int rowCurrent = row;
                 int columnCurrent = column;
-                counter.incrementAndGet();
+
                 executorService.submit(() -> {
                     int columnWidth = width / columnsCount;
                     int rowHeight = height / rowsCount;
@@ -84,10 +90,8 @@ public class ImageGenerationController {
                                     .rowsStart(rowCurrent * rowHeight)
                                     .build())
                             .writableImage(imageProperty.get())
-                            .executorService(executorService)
-                            .counter(counter)
-                            .settingsHolder(settingsHolder)
-                            .iterations(settingsHolder.getApplicationSettings().getIterations())
+                            .smallestChunkBorderSize(settingsHolder.getApplicationSettings().getMinChunkBorderSize())
+                            .iterations(iterations)
                             .recurentExpressionCalculator(recurrentExpressionCalculators.get(columnCurrent * rowsCount + rowCurrent))
                             .firstExpressionCalculator(firstExpressionCalculators.get(columnCurrent * rowsCount + rowCurrent))
                             .unitsPerPixel(unitsPerPixel)
@@ -99,18 +103,7 @@ public class ImageGenerationController {
                 });
             }
         }
-        int counterLast = 0;
-while (counter.get() >0) {
-    if(counterLast>counter.get()) {
-        System.out.println(counterLast);
-    }
-    counterLast=counter.get();
-    try {
-        Thread.sleep(100);
-    } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-    }
-}
+
         executorService.shutdown();
 
         try {

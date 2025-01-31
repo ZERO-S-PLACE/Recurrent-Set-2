@@ -4,6 +4,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
@@ -38,14 +39,12 @@ public class MainPanelController implements Initializable {
 
     public void generateImage(RecurrentExpression recurrentExpression) {
         if (mainImage == null) {
-            mainImage = new ImageView(imageGenerationController.getNewImage(recurrentExpression,
+            WritableImage writableImage=imageGenerationController.getNewImage(recurrentExpression,
                     (int) mainImageContainer.getWidth(),
-                    (int) mainImageContainer.getHeight()));
-
-
+                    (int) mainImageContainer.getHeight());
+            mainImage = new ImageView(writableImage);
             mainImageContainer.setCenter(mainImage);
             mainImage.setPreserveRatio(true);
-            mainImage.setSmooth(true);
             BorderPane.setAlignment(mainImage, Pos.CENTER);
         } else {
             mainImage.setImage(imageGenerationController.getNewImage(recurrentExpression,
