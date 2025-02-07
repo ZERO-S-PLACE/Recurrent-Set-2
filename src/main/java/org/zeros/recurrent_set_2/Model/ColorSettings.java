@@ -21,7 +21,7 @@ public class ColorSettings {
     private String name;
     @NonNull
     @Builder.Default
-    private Color backgroundColor = Color.TRANSPARENT;
+    private Color backgroundColor = Color.color(1, 0.95, 1);
     @NonNull
     @Builder.Default
     private Color includedElementsColor = Color.BLACK;

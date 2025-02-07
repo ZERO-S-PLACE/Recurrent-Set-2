@@ -1,20 +1,26 @@
 package org.zeros.recurrent_set_2.Views;
 
+import jakarta.validation.constraints.Past;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-import org.zeros.recurrent_set_2.Controllers.MainPanelController;
+import org.zeros.recurrent_set_2.Controllers.MainImageController;
 
 import java.io.IOException;
 
 @Component
+@Getter
 @RequiredArgsConstructor
 public class ViewFactory {
-    private Scene scene;
-    private final MainPanelController mainPanelController;
+    private Scene mainScene;
+    private Stage mainStage;
+    private final MainImageController mainPanelController;
     private BorderPane mainPanel;
 
 
@@ -30,16 +36,16 @@ public class ViewFactory {
     private void createStage(FXMLLoader loader) {
 
         try {
-            scene = new Scene(loader.load());
+            mainScene = new Scene(loader.load());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        Stage stage = new Stage();
-        //stage.getIcons().add(new Image(String.valueOf(ViewFactory.class.getResource("/Icons/ProgramIcon.png"))));
-        stage.setScene(scene);
-        stage.setMaximized(true);
-        stage.setTitle("Recurrent Set 2 by Zeros");
-        stage.show();
+        mainStage = new Stage();
+        mainStage.getIcons().add(new Image(String.valueOf(ViewFactory.class.getResource("/program_icon2.png"))));
+        mainStage.setScene(mainScene);
+        mainStage.setMaximized(true);
+        mainStage.setTitle("Recurrent Set 2 by Zeros");
+        mainStage.show();
     }
 
 }

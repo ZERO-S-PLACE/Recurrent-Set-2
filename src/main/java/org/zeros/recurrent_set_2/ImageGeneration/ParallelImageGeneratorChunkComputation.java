@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -29,6 +30,7 @@ public class ParallelImageGeneratorChunkComputation {
     private final int smallestChunkBorderSize;
     private final ExpressionCalculator recurentExpressionCalculator;
     private final ExpressionCalculator firstExpressionCalculator;
+
 
 
     /*
@@ -50,7 +52,7 @@ public class ParallelImageGeneratorChunkComputation {
     }
 
     private void computeForChunk(ImageChunk imageChunk, ImageChunkBorders imageChunkBorders) {
-
+        if (Thread.currentThread().isInterrupted()) {return;}
         if (Arrays.stream(imageChunkBorders.rightBorder()).allMatch(value -> value == iterations)
                 && Arrays.stream(imageChunkBorders.topBorder()).allMatch(value -> value == iterations)
                 && Arrays.stream(imageChunkBorders.bottomBorder()).allMatch(value -> value == iterations)
@@ -66,6 +68,7 @@ public class ParallelImageGeneratorChunkComputation {
     }
 
     private void divideAndCheckSubChunks(ImageChunk imageChunk, ImageChunkBorders imageChunkBorders) {
+
         int divisionColumn = (imageChunk.columnsStart() + imageChunk.columnsEnd()) / 2;
         int divisionRow = (imageChunk.rowsStart() + imageChunk.rowsEnd()) / 2;
         int[] verticalBorder = getIterationsSatisfiedAtColumn(divisionColumn, imageChunk.rowsStart(), imageChunk.rowsEnd());
@@ -89,12 +92,13 @@ public class ParallelImageGeneratorChunkComputation {
         //TOP LEFT CHUNK
 
 
-       computeForChunk(new ImageChunk(imageChunk.rowsStart(),
-                        divisionRow,
-                        imageChunk.columnsStart(),
-                        divisionColumn),
-                new ImageChunkBorders(leftBorderUpperPart, middleBorderUpperPart,
-                        topBorderLeftPart, middleBorderLeftPart));
+            computeForChunk(new ImageChunk(imageChunk.rowsStart(),
+                            divisionRow,
+                            imageChunk.columnsStart(),
+                            divisionColumn),
+                    new ImageChunkBorders(leftBorderUpperPart, middleBorderUpperPart,
+                            topBorderLeftPart, middleBorderLeftPart));
+
 
         //TOP RIGHT CHUNK
        computeForChunk(new ImageChunk(imageChunk.rowsStart(),
@@ -184,6 +188,7 @@ public class ParallelImageGeneratorChunkComputation {
         iterationsSatisfied[0]=imageChunkBorders.topBorder();
         iterationsSatisfied[iterationsSatisfied.length-1]=imageChunkBorders.bottomBorder();
         for (int row = imageChunk.rowsStart()+1; row < imageChunk.rowsEnd()-1; row++) {
+            if (Thread.currentThread().isInterrupted()) {return;}
             iterationsSatisfied[row-imageChunk.rowsStart()][0] = imageChunkBorders.leftBorder()[row-imageChunk.rowsStart()];
             iterationsSatisfied[row-imageChunk.rowsStart()][imageChunk.columnsEnd() - imageChunk.columnsStart()-1] =
                     imageChunkBorders.rightBorder()[row-imageChunk.rowsStart()];

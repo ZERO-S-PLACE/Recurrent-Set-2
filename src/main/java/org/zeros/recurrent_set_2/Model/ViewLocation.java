@@ -17,6 +17,9 @@ public class ViewLocation {
     @NonNull
     @Builder.Default
     private Double horizontalSpan=2.0;
+    @NonNull
+    @Builder.Default
+    private Double referenceScale=1.0;
 
     @Transient
     public static ViewLocation DEFAULT = ViewLocation.builder()
