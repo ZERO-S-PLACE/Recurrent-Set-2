@@ -13,6 +13,7 @@ module ReccurentSet {
     requires spring.beans;
     requires jakarta.persistence;
     requires jakarta.validation;
+    requires aparapi;
 
     exports org.zeros.recurrent_set_2;
     exports org.zeros.recurrent_set_2.Controllers;

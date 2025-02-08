@@ -21,7 +21,7 @@ public class StartConfig implements CommandLineRunner {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            Platform.runLater(()->mainImageController.generateImage(RecurrentExpression.MANDELBROT));
+            Platform.runLater(()->mainImageController.generateImage(RecurrentExpression.X1_SHAPE));
         }).start();
     }
 

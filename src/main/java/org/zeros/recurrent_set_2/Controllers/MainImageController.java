@@ -42,6 +42,28 @@ public class MainImageController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        addResizeHandling();
+        addDragListeners();
+        addScrollListeners();
+
+        mainImageContainer.setBackground(new Background(new BackgroundFill(settingsHolder.getColorSettings().getBackgroundColor(), null, null)));
+    }
+
+    private void addScrollListeners() {
+        mainImageContainer.setOnScroll(event -> {
+            Point2D reference=new Point2D(event.getX(), event.getY());
+            Platform.runLater(() ->{
+            if(event.getDeltaY()>0){
+
+                imageGenerationController.resizeImage(settingsHolder.getApplicationSettings().getDefaultRescaleOnScroll()*Math.log10(event.getDeltaY()),reference);
+            }else if(event.getDeltaY()<0) {
+                imageGenerationController.resizeImage(1/settingsHolder.getApplicationSettings().getDefaultRescaleOnScroll()/Math.log10(-event.getDeltaY()),reference);
+            }
+        });
+        });
+    }
+
+    private void addResizeHandling() {
         Platform.runLater(()-> {
                     mainImageContainer.prefWidthProperty().bind(mainImageContainer.getScene().widthProperty());
                     mainImageContainer.prefHeightProperty().bind(mainImageContainer.getScene().heightProperty());
@@ -51,14 +73,12 @@ public class MainImageController implements Initializable {
             mainImageContainer.setCenter(newValue);
         });
         mainImageContainer.widthProperty().addListener((observable, oldValue, newValue) -> {
-
-            onWindowResize();
-        });
+            onWindowResize();});
         mainImageContainer.heightProperty().addListener((observable, oldValue, newValue) -> {
-            onWindowResize();
-        });
-        });
+            onWindowResize();});});
+    }
 
+    private void addDragListeners() {
         mainImageContainer.setOnDragDetected(event -> {
             imageGenerationController.setMoveReference(new Point2D(event.getX(), event.getY()));
             mainImageContainer.addEventHandler(MouseEvent.MOUSE_DRAGGED, imageSlideListener);
@@ -71,18 +91,6 @@ public class MainImageController implements Initializable {
             imageGenerationController.moveViewAndRegenerateBlankPart(new Point2D(event.getX(), event.getY()));
             event.consume();
         });
-
-        mainImageContainer.setOnScroll(event -> {
-            Point2D reference=new Point2D(event.getX(), event.getY());
-
-            if(event.getDeltaY()>0){
-                imageGenerationController.resizeImage(settingsHolder.getApplicationSettings().getDefaultRescaleOnScroll(),reference);
-            }else if(event.getDeltaY()<0) {
-                imageGenerationController.resizeImage(1/settingsHolder.getApplicationSettings().getDefaultRescaleOnScroll(),reference);
-            }
-        });
-
-        mainImageContainer.setBackground(new Background(new BackgroundFill(settingsHolder.getColorSettings().getBackgroundColor(), null, null)));
     }
 
     private void onWindowResize() {

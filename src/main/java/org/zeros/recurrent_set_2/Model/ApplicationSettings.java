@@ -15,13 +15,13 @@ public class ApplicationSettings {
     String name;
     @NonNull
     @Builder.Default
-    private Integer iterations = 500;
+    private Integer iterationsMin = 350;
     @NonNull
     @Builder.Default
-    private Integer iterationsPreView = 100;
+    private Integer iterationsMax = 3000;
     @NonNull
     @Builder.Default
-    private Integer minIterationsSatisfiedToBeVisible = 3;
+    private Integer minIterationsSatisfiedToBeVisible = 1;
     @NonNull
     @Builder.Default
     private Integer exportHeight = 1795;
@@ -33,13 +33,13 @@ public class ApplicationSettings {
     private Integer numberOfThreads = 12;
     @NonNull
     @Builder.Default
-    private Integer minChunkBorderSize =20;
+    private Integer minChunkBorderSize =30;
     @NonNull
     @Builder.Default
-    private Integer maxChunkBorderSize =300;
+    private Integer maxChunkBorderSize =400;
     @NonNull
     @Builder.Default
-    private Double defaultRescaleOnScroll=1.5;
+    private Double defaultRescaleOnScroll=1.3;
 
 
     @Transient

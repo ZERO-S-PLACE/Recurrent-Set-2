@@ -112,6 +112,11 @@
 			<artifactId>big-math</artifactId>
 			<version>2.3.2</version> 
 		</dependency>
+		<dependency>
+			<groupId>com.aparapi</groupId>
+			<artifactId>aparapi</artifactId>
+			<version>3.0.2</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.hibernate.validator</groupId>
