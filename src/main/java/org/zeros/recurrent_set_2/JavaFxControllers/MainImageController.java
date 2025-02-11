@@ -1,4 +1,4 @@
-package org.zeros.recurrent_set_2.Controllers;
+package org.zeros.recurrent_set_2.JavaFxControllers;
 
 import javafx.application.Platform;
 import javafx.event.EventHandler;
@@ -10,12 +10,10 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
 import org.zeros.recurrent_set_2.ImageGeneration.ImageGenerationController;
 import org.zeros.recurrent_set_2.Model.RecurrentExpression;
-import org.zeros.recurrent_set_2.Views.ViewFactory;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -30,6 +28,7 @@ public class MainImageController implements Initializable {
     public BorderPane mainImageContainer;
     private final ImageGenerationController imageGenerationController;
     private final SettingsHolder settingsHolder;
+    private final SaveFileDialogController saveFileDialogController;
 
     private final EventHandler<MouseEvent> imageSlideListener = this::moveImage;
 
@@ -71,14 +70,22 @@ public class MainImageController implements Initializable {
         imageGenerationController.getImageCanvasProperty().addListener((observable, oldValue, newValue) -> {
             mainImageContainer.getChildren().clear();
             mainImageContainer.setCenter(newValue);
-        });
+        });});
+
         mainImageContainer.widthProperty().addListener((observable, oldValue, newValue) -> {
             onWindowResize();});
         mainImageContainer.heightProperty().addListener((observable, oldValue, newValue) -> {
-            onWindowResize();});});
+            onWindowResize();});
     }
 
     private void addDragListeners() {
+        mainImageContainer.setOnMouseClicked(mouseEvent -> {
+            if(mouseEvent.isControlDown()){
+                saveFileDialogController.saveFileDialog();
+            }
+        });
+
+
         mainImageContainer.setOnDragDetected(event -> {
             imageGenerationController.setMoveReference(new Point2D(event.getX(), event.getY()));
             mainImageContainer.addEventHandler(MouseEvent.MOUSE_DRAGGED, imageSlideListener);

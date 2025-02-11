@@ -1,6 +1,5 @@
 package org.zeros.recurrent_set_2.Views;
 
-import jakarta.validation.constraints.Past;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -8,9 +7,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-import org.zeros.recurrent_set_2.Controllers.MainImageController;
+import org.zeros.recurrent_set_2.JavaFxControllers.MainImageController;
 
 import java.io.IOException;
 

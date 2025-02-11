@@ -1,18 +1,25 @@
 package org.zeros.recurrent_set_2.Model;
 
-import jakarta.persistence.Transient;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Getter
 @Setter
 @Builder
+@Entity
 @NoArgsConstructor
 @AllArgsConstructor
 public class ApplicationSettings {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    protected Long id;
     @NonNull
     @NotBlank
-    String name;
+    private String name;
+    @NonNull
+    @Builder.Default
+    private Boolean areDefaultSettings = false;
     @NonNull
     @Builder.Default
     private Integer iterationsMin = 350;
@@ -21,7 +28,13 @@ public class ApplicationSettings {
     private Integer iterationsMax = 3000;
     @NonNull
     @Builder.Default
+    private Integer iterationsPreview =75;
+    @NonNull
+    @Builder.Default
     private Integer minIterationsSatisfiedToBeVisible = 1;
+    @NonNull
+    @Builder.Default
+    private Integer iterationsExport =5000;
     @NonNull
     @Builder.Default
     private Integer exportHeight = 1795;
@@ -30,10 +43,10 @@ public class ApplicationSettings {
     private Integer exportWidth = 2551;
     @NonNull
     @Builder.Default
-    private Integer numberOfThreads = 12;
+    private Integer numberOfThreads = Runtime.getRuntime().availableProcessors();
     @NonNull
     @Builder.Default
-    private Integer minChunkBorderSize =30;
+    private Integer minChunkBorderSize =25;
     @NonNull
     @Builder.Default
     private Integer maxChunkBorderSize =400;
@@ -49,5 +62,7 @@ public class ApplicationSettings {
 
     @Transient
     public static final double MAXIMAL_EXPRESSION_VALUE =2;
+
+
 
 }

@@ -4,7 +4,7 @@ import javafx.application.Platform;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-import org.zeros.recurrent_set_2.Controllers.MainImageController;
+import org.zeros.recurrent_set_2.JavaFxControllers.MainImageController;
 import org.zeros.recurrent_set_2.Model.RecurrentExpression;
 
 @Component
@@ -15,14 +15,19 @@ public class StartConfig implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-       new Thread(() -> {
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            Platform.runLater(()->mainImageController.generateImage(RecurrentExpression.X1_SHAPE));
-        }).start();
+
+        createDefaultImage();
+    }
+
+    private void createDefaultImage() {
+        new Thread(() -> {
+             try {
+                 Thread.sleep(500);
+             } catch (InterruptedException e) {
+                 throw new RuntimeException(e);
+             }
+             Platform.runLater(()->mainImageController.generateImage(RecurrentExpression.MANDELBROT));
+         }).start();
     }
 
 }

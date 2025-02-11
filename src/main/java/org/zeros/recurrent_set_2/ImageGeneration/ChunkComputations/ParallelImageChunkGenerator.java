@@ -1,4 +1,4 @@
-package org.zeros.recurrent_set_2.ImageGeneration;
+package org.zeros.recurrent_set_2.ImageGeneration.ChunkComputations;
 
 import javafx.application.Platform;
 import javafx.scene.image.PixelFormat;
@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.complex.Complex;
 import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculator;
+import org.zeros.recurrent_set_2.ImageGeneration.BoundaryGradientColors;
 import org.zeros.recurrent_set_2.Model.ApplicationSettings;
 
 import java.util.Arrays;
@@ -16,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Builder
-public class ParallelImageGeneratorChunkComputation {
+public class ParallelImageChunkGenerator {
 
     private final ImageChunk imageChunk;
     private final Complex topLeftPoint;
@@ -39,7 +40,7 @@ public class ParallelImageGeneratorChunkComputation {
     in this case compute all points normally
     */
 
-    protected void compute() {
+    public void compute() {
         int[] leftBorder = getIterationsSatisfiedAtColumn(imageChunk.columnsStart(), imageChunk.rowsStart(), imageChunk.rowsEnd());
         int[] rightBorder = getIterationsSatisfiedAtColumn(imageChunk.columnsEnd(), imageChunk.rowsStart(), imageChunk.rowsEnd());
         int[] topBorder = getIterationsSatisfiedAtRow(imageChunk.rowsStart(), imageChunk.columnsStart(), imageChunk.columnsEnd());

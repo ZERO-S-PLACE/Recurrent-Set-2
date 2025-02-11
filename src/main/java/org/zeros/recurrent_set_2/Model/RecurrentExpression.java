@@ -1,7 +1,8 @@
 package org.zeros.recurrent_set_2.Model;
 
 
-import jakarta.persistence.Transient;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.apache.commons.math3.complex.Complex;
 
@@ -11,7 +12,17 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Setter
 @Builder
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
 public class RecurrentExpression {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    protected Long id;
+    @NonNull
+    @NotBlank
+    @Builder.Default
+    private String name="V1";
     @NonNull
     private String firstExpression;
     @NonNull
@@ -24,9 +35,12 @@ public class RecurrentExpression {
     private String recurrentVariableName ="z";
     @NonNull
     @Builder.Default
+    @OneToOne
     private ViewLocation defaultViewLocation=ViewLocation.DEFAULT;
     @NonNull
     @Builder.Default
+    @OneToMany
+    @JoinTable(name = "expression_locations", joinColumns = @JoinColumn(name = "expression_id"), inverseJoinColumns = @JoinColumn(name = "location_id"))
     private Set<ViewLocation> savedViewLocations=Set.of(ViewLocation.DEFAULT);
 
 
