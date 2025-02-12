@@ -1,6 +1,8 @@
 package org.zeros.recurrent_set_2.Model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import javafx.scene.paint.Color;
 import lombok.*;
@@ -45,6 +47,11 @@ public class ColorSettings {
     @Builder.Default
     @Convert(converter = ColorConverter.class)
     private Color BoundaryGradientEndColor = Color.web("#243253");
+    @NonNull
+    @Builder.Default
+    @Max(Integer.MAX_VALUE)
+    @Min(1)
+    private Integer minIterationsSatisfiedToBeVisible = 1;
     @NonNull
     @Builder.Default
     private Boolean fadeOut = Boolean.TRUE;

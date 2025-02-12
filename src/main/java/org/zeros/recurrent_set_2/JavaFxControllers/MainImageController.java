@@ -1,14 +1,18 @@
 package org.zeros.recurrent_set_2.JavaFxControllers;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
@@ -44,7 +48,26 @@ public class MainImageController implements Initializable {
         addResizeHandling();
         addDragListeners();
         addScrollListeners();
+        ProgressBar progressBar = new ProgressBar();
+        progressBar.prefWidthProperty().bind(Bindings.createDoubleBinding(()->mainImageContainer.widthProperty().get()-100,mainImageContainer.widthProperty()));
+        progressBar.progressProperty().addListener(((observable, oldValue, newValue) ->
+        {
+            if(oldValue.doubleValue()>=1&& newValue.doubleValue()<1){
+                progressBar.setVisible(true);
+            }
+            if(oldValue.doubleValue()<1&& newValue.doubleValue()>=1){
+                progressBar.setVisible(false);
+            }
 
+        }));
+        progressBar.setMinHeight(20);
+        progressBar.progressProperty().bind(imageGenerationController.getProgressProperty());
+        Label timeLabel = new Label();
+        timeLabel.textProperty().bind(Bindings.createStringBinding(
+                () -> String.format("Time: %.2f",imageGenerationController.getGenerationTimeProperty().get()),
+                imageGenerationController.getGenerationTimeProperty()
+        ));
+        mainImageContainer.setBottom(new HBox(progressBar, timeLabel));
         mainImageContainer.setBackground(new Background(new BackgroundFill(settingsHolder.getColorSettings().getBackgroundColor(), null, null)));
     }
 
@@ -68,7 +91,7 @@ public class MainImageController implements Initializable {
                     mainImageContainer.prefHeightProperty().bind(mainImageContainer.getScene().heightProperty());
 
         imageGenerationController.getImageCanvasProperty().addListener((observable, oldValue, newValue) -> {
-            mainImageContainer.getChildren().clear();
+            mainImageContainer.getChildren().remove(oldValue);
             mainImageContainer.setCenter(newValue);
         });});
 
@@ -81,7 +104,7 @@ public class MainImageController implements Initializable {
     private void addDragListeners() {
         mainImageContainer.setOnMouseClicked(mouseEvent -> {
             if(mouseEvent.isControlDown()){
-                saveFileDialogController.saveFileDialog();
+                saveFileDialogController.saveFileDialog(imageGenerationController.getViewLocation(),imageGenerationController.getRecurrentExpression());
             }
         });
 

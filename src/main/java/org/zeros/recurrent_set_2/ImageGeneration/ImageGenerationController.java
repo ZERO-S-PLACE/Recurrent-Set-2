@@ -1,56 +1,60 @@
 package org.zeros.recurrent_set_2.ImageGeneration;
 
-import javafx.animation.AnimationTimer;
+import javafx.application.Platform;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.MapChangeListener;
+import javafx.collections.ObservableMap;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.complex.Complex;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
-import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculator;
 import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorCreator;
-import org.zeros.recurrent_set_2.ImageGeneration.ChunkComputations.ImageChunk;
-import org.zeros.recurrent_set_2.ImageGeneration.ChunkComputations.ParallelImageChunkGenerator;
 import org.zeros.recurrent_set_2.Model.RecurrentExpression;
 import org.zeros.recurrent_set_2.Model.ViewLocation;
 
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class ImageGenerationController {
 
-    private final ArrayList<ExpressionCalculator> recurrentExpressionCalculators = new ArrayList<>();
-    private final ArrayList<ExpressionCalculator> firstExpressionCalculators = new ArrayList<>();
-    private final Map<WritableImage, Point2D> imagePartsLocationsMap = new HashMap<>();
     private final SimpleObjectProperty<Canvas> imageCanvasProperty = new SimpleObjectProperty<>();
-    private final BoundaryGradientColors boundaryGradientColors;
+    private final Map<Image, Point2D> imagePartsLocationsMap = new HashMap<>();
+    private final ObservableMap<Image, ImageGeneratorChunks> imageGeneratorsMap = FXCollections.observableHashMap();
+    @Getter
+    private final DoubleProperty progressProperty = new SimpleDoubleProperty(1);
+    @Getter
+    private final DoubleProperty generationTimeProperty = new SimpleDoubleProperty(0);
     private final SettingsHolder settingsHolder;
     private final ExpressionCalculatorCreator calculatorCreator;
-    private final Map<ImagePreviewAnimation, Point2D> animationTimers = new HashMap<>();
-    private final Set<ExecutorService> generationThreadExecutors = new HashSet<>();
+    @Getter
     private RecurrentExpression recurrentExpression;
+    @Getter
     private ViewLocation viewLocation;
-    private int imageWidth;
-    private int imageHeight;
+    private Point2D imageDimensions;
     private Point2D referencePointOnCanvas;
-    private AtomicInteger progressCounter = new AtomicInteger(0);
-    private Long timeStarted =0L;
-    private final DoubleProperty progressProperty = new SimpleDoubleProperty(0);
+    private ExecutorService executorService;
 
 
+    public ImageGenerationController(SettingsHolder settingsHolder, ExpressionCalculatorCreator calculatorCreator) {
+        this.settingsHolder = settingsHolder;
+        this.calculatorCreator = calculatorCreator;
+
+    }
 
     public void setMoveReference(Point2D referencePointOnCanvas) {
         this.referencePointOnCanvas = referencePointOnCanvas;
@@ -63,33 +67,27 @@ public class ImageGenerationController {
         }
     }
 
-
     private void applyOffsetToExistingImage(Point2D newPosition) {
 
         Point2D offset = newPosition.subtract(referencePointOnCanvas);
         referencePointOnCanvas = null;
-
         imagePartsLocationsMap.forEach((image, location) ->
                 imagePartsLocationsMap.replace(image, location.add(offset)));
-        animationTimers.forEach((animation, location) ->
-                animation.updateOffset(location.add(offset)));
-        viewLocation.setCenterPoint(viewLocation.getCenterPoint().add(
-                new Complex(-offset.getX() * getUnitsPerPixel(), offset.getY() * getUnitsPerPixel())));
+        imageGeneratorsMap.forEach((image, imageGenerator) ->
+                imageGenerator.getImageGenerationPreview().updateOffset(
+                        imagePartsLocationsMap.get(image).add(offset)));
+        viewLocation.applyOffset(imageDimensions, offset);
         rewriteAllImageParts();
-        animationTimers.keySet().forEach((ImagePreviewAnimation::start));
+        imageGeneratorsMap.forEach((image, imageGenerator) ->
+                imageGenerator.getImageGenerationPreview().start());
     }
 
     public void moveViewTemporary(Point2D newPosition) {
         if (referencePointOnCanvas != null) {
-            animationTimers.keySet().forEach((ImagePreviewAnimation::stop));
+            imageGeneratorsMap.forEach((image, imageGenerator) ->
+                    imageGenerator.getImageGenerationPreview().stop());
             rewriteAllImageParts(newPosition.subtract(referencePointOnCanvas));
         }
-    }
-
-    public void abandonMove() {
-        this.referencePointOnCanvas = null;
-        rewriteAllImageParts();
-        animationTimers.keySet().forEach((ImagePreviewAnimation::start));
     }
 
     private void rewriteAllImageParts() {
@@ -97,27 +95,17 @@ public class ImageGenerationController {
     }
 
     private void rewriteAllImageParts(Point2D offsetOnCanvas) {
-        imageCanvasProperty.get().getGraphicsContext2D().clearRect(0, 0, imageWidth, imageHeight);
+        imageCanvasProperty.get().getGraphicsContext2D().clearRect(0, 0, imageDimensions.getX(), imageDimensions.getY());
         imagePartsLocationsMap.forEach((image, location) ->
                 writeImageOnCanvas(image, location.add(offsetOnCanvas)));
     }
 
     public void resizeImage(double scaleFactor, Point2D referencePointOnCanvas) {
-        Complex pointOnSet = getPointOnSetFromCanvas(referencePointOnCanvas);
+        Complex pointOnSet = viewLocation.getPointOnSetCoordinate(imageDimensions, referencePointOnCanvas);
         viewLocation.setCenterPoint(pointOnSet.add(viewLocation.getCenterPoint().subtract(pointOnSet).multiply(1 / scaleFactor)));
         viewLocation.setHorizontalSpan(viewLocation.getHorizontalSpan() / scaleFactor);
         viewLocation.setReferenceScale(viewLocation.getReferenceScale() * scaleFactor);
         regenerateImage();
-
-    }
-
-    private Complex getPointOnSetFromCanvas(Point2D pointOnCanvas) {
-        Complex topLeftPoint = viewLocation.getCenterPoint().add(new Complex(
-                getUnitsPerPixel() * ((double) -imageWidth / 2),
-                getUnitsPerPixel() * ((double) imageHeight / 2)));
-
-        return topLeftPoint.add(new Complex(pointOnCanvas.getX() * getUnitsPerPixel(),
-                -pointOnCanvas.getY() * getUnitsPerPixel()));
     }
 
     private void generateMissingParts() {
@@ -125,13 +113,9 @@ public class ImageGenerationController {
     }
 
     public void regenerateImage() {
-        logGenerationStarted();
         resetVariables();
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        generationThreadExecutors.add(executor);
-        executor.submit(() -> generateNewImage(imageWidth, imageHeight,
-                new Point2D(0, 0),false));
-        executor.shutdown();
+        executorService.submit(() -> generateNewImageWithPreview(imageDimensions, new Point2D(0, 0)));
+        executorService.shutdown();
 
         //FOR TEST ONLY
         /*try {
@@ -142,169 +126,69 @@ public class ImageGenerationController {
 
     }
 
-    private void logGenerationStarted() {
-        log.atInfo().log("Regenerating image...");
-        log.atInfo().log("Size: " + imageWidth + "x" + imageHeight);
-        log.atInfo().log("Scale: " + String.format("%.2f",viewLocation.getReferenceScale()));
-        log.atInfo().log("Iterations: " + getIterationsInView());
-    }
-
     private void resetVariables() {
-        Canvas canvas = new Canvas(imageWidth, imageHeight);
+        Canvas canvas = new Canvas(imageDimensions.getX(), imageDimensions.getY());
         imageCanvasProperty.set(canvas);
-        generationThreadExecutors.forEach(ExecutorService::shutdownNow);
-        generationThreadExecutors.clear();
-        animationTimers.keySet().forEach(AnimationTimer::stop);
-        animationTimers.clear();
         imagePartsLocationsMap.clear();
-
-    }
-
-    private void initializeCalculatorsPools(RecurrentExpression expression, int poolSize) {
-        for (int i = 0; i < poolSize; i++) {
-            recurrentExpressionCalculators.add(calculatorCreator.getExpressionCalculator(expression.getRecurrentExpression(), expression.getVariableNames()));
-            firstExpressionCalculators.add(calculatorCreator.getExpressionCalculator(expression.getFirstExpression(), expression.getVariableNames()));
+        removeGenerationProgressBindings();
+        imageGeneratorsMap.forEach((image, imageGenerator) -> imageGenerator.abandonGenerationNow());
+        imageGeneratorsMap.clear();
+        if (executorService != null) {
+            executorService.shutdownNow();
+            try {
+                executorService.awaitTermination(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
+        executorService = Executors.newSingleThreadExecutor();
     }
-public Image generateImageExport() {
-    generationThreadExecutors.forEach(ExecutorService::shutdownNow);
-    generationThreadExecutors.clear();
-    animationTimers.keySet().forEach(AnimationTimer::stop);
-    animationTimers.clear();
-    ExecutorService executor = Executors.newSingleThreadExecutor();
-    generationThreadExecutors.add(executor);
-    AtomicReference<Image> image= new AtomicReference<>();
-    executor.submit(() -> image.set(generateNewImage(imageWidth, imageHeight,
-            new Point2D(0, 0), true)));
-    executor.shutdown();
-    try {
-        executor.awaitTermination(100,TimeUnit.DAYS);
-    } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-    }
-    return image.get();
-}
-    private WritableImage generateNewImage(int width, int height, Point2D locationOnCanvas,boolean forExport) {
 
-        WritableImage image = new WritableImage(width, height);
+    private void generateNewImageWithPreview(Point2D imageDimensions, Point2D locationOnCanvas) {
+        WritableImage image = new WritableImage((int) imageDimensions.getX(), (int) imageDimensions.getY());
         imagePartsLocationsMap.put(image, locationOnCanvas);
         for (int i = 0; i < 2; i++) {
-            timeStarted=System.currentTimeMillis();
-            progressCounter = new AtomicInteger(0);
-            progressProperty.set(0);
-            int iterations;
-            if(forExport) {
-                iterations = settingsHolder.getApplicationSettings().getIterationsExport();
-                boundaryGradientColors.regenerateColorMaps(iterations);
-                i++;
-            }else {
-                iterations = i == 0 ? getIterationsPreview() : getIterationsInView();
-                boundaryGradientColors.regenerateColorMaps(iterations);
+
+            int iterations = i == 0 ? getIterationsPreview() : getIterationsInView();
+            ImageGeneratorChunks imageGenerator = new ImageGeneratorChunks(settingsHolder, calculatorCreator, recurrentExpression, viewLocation, image, iterations);
+            Platform.runLater(() -> imageGeneratorsMap.put(image, imageGenerator));
+            createGenerationProgressBindings();
+            imageGenerator.addImageGenerationPreview(imageCanvasProperty.get());
+            imageGenerator.generateImage();
+            if (i == 0) {
+                log.atInfo().log("Image preview generated");
+            } else {
+                log.atInfo().log("Image generated");
             }
-
-            int columnsCount = width / settingsHolder.getApplicationSettings().getMaxChunkBorderSize() + 1;
-            int rowsCount = height / settingsHolder.getApplicationSettings().getMaxChunkBorderSize() + 1;
-            initializeCalculatorsPools(recurrentExpression, rowsCount * columnsCount);
-
-            ThreadPoolExecutor executorService = getCustomThreadExecutor();
-            generationThreadExecutors.add(executorService);
-            Set<Runnable> tasks = new HashSet<>();
-            for (int column = 0; column < columnsCount; column++) {
-
-                for (int row = 0; row < rowsCount; row++) {
-                    int rowCurrent = row;
-                    int columnCurrent = column;
-
-                    tasks.add(() -> {
-
-                        int columnWidth = width / columnsCount;
-                        int rowHeight = height / rowsCount;
-                        double unitsPerPixel = getUnitsPerPixel();
-                        ParallelImageChunkGenerator.builder()
-                                .boundaryGradientColors(boundaryGradientColors)
-                                .imageChunk(ImageChunk.builder()
-                                        .columnsEnd((columnCurrent + 1) * columnWidth)
-                                        .columnsStart(columnCurrent * columnWidth)
-                                        .rowsEnd((rowCurrent + 1) * rowHeight)
-                                        .rowsStart(rowCurrent * rowHeight)
-                                        .build())
-                                .writableImage(image)
-                                .progressCounter(progressCounter)
-                                .executorService(executorService)
-                                .smallestChunkBorderSize(settingsHolder.getApplicationSettings().getMinChunkBorderSize())
-                                .iterations(iterations)
-                                .recurentExpressionCalculator(recurrentExpressionCalculators.get(columnCurrent * rowsCount + rowCurrent))
-                                .firstExpressionCalculator(firstExpressionCalculators.get(columnCurrent * rowsCount + rowCurrent))
-                                .unitsPerPixel(unitsPerPixel)
-                                .topLeftPoint(viewLocation.getCenterPoint().add(new Complex(
-                                        unitsPerPixel * ((double) -width / 2),
-                                        unitsPerPixel * ((double) height / 2))))
-                                .build()
-                                .compute();
-
-                    });
-
-                }
-            }
-            if (Thread.currentThread().isInterrupted()) {
-                log.atInfo().log("Skipped generation of image");
-                return null;
-            }
-            tasks.forEach(executorService::submit);
-            ImagePreviewAnimation timer = new ImagePreviewAnimation(image, imageCanvasProperty.get(), locationOnCanvas.getX(), locationOnCanvas.getY());
-            animationTimers.put(timer, imagePartsLocationsMap.get(image));
-            timer.start();
-            if (awaitGenerationFinished(executorService,i==0)) return null;
-            clearTempVariables(executorService, timer);
-            log.atInfo().log("Finished generating image preview");
+            removeGenerationProgressBindings();
+            Platform.runLater(() -> imageGeneratorsMap.remove(image));
+            rewriteAllImageParts();
         }
-        log.atInfo().log("Finished generating image");
-        return image;
-
     }
 
-    private @NotNull ThreadPoolExecutor getCustomThreadExecutor() {
-        return new ThreadPoolExecutor(
-                settingsHolder.getApplicationSettings().getNumberOfThreads(),
-                Integer.MAX_VALUE,
-                60L, TimeUnit.DAYS,
-                new LinkedTransferQueue<>()
-        );
+    private void removeGenerationProgressBindings() {
+        Platform.runLater(() -> {
+            progressProperty.unbind();
+            progressProperty.set(1);
+            generationTimeProperty.unbind();
+        });
     }
 
-    private void clearTempVariables(ThreadPoolExecutor executorService, ImagePreviewAnimation timer) {
-        executorService.shutdown();
-        timer.stop();
-        animationTimers.remove(timer);
-        rewriteAllImageParts();
-        generationThreadExecutors.remove(executorService);
-        timeStarted=0L;
-        progressProperty.set(0);
-    }
 
-    private boolean awaitGenerationFinished(ThreadPoolExecutor executorService,boolean atPreview) {
-        int logsCounter = 0;
-        String message = atPreview? "Processing preview.. ":"Processing image.. ";
-        while (executorService.getActiveCount() > 0) {
-            if (getGenerationTime()>logsCounter) {
-                progressProperty.set(getProgress());
-               logsCounter++;
-                log.atInfo().log( message+ String.format("%.2f", getProgress()) + "%");
-                log.atInfo().log(message + String.format("%.2f", getGenerationTime()) + "s");
-            }
+    /*
+    INCRESING ITERATIONS COUNT IN BIGGER SCALES, TO INCRESE QUALITY OF IMAGE
+    */
 
-            if (Thread.currentThread().isInterrupted()) {
-                log.atInfo().log("Skipped generation of image");
-                return true;
-            }
-            Thread.onSpinWait();
-        }
-        return false;
+    private void createGenerationProgressBindings() {
+        Platform.runLater(() -> {
+            progressProperty.bind(averageProgressBinding);
+            generationTimeProperty.bind(timeOfGenerationBinding);
+        });
     }
 
     private int getIterationsInView() {
 
-        /* INCRESING ITERATIONS COUNT IN BIGGER SCALES, TO INCRESE QUALITY OF IMAGE*/
+
         if (viewLocation.getReferenceScale() > 1) {
             int iterations = (int) (settingsHolder.getApplicationSettings().getIterationsMin() * Math.sqrt(Math.sqrt(viewLocation.getReferenceScale())));
             if (iterations < settingsHolder.getApplicationSettings().getIterationsMax()) {
@@ -314,9 +198,9 @@ public Image generateImageExport() {
         }
         return settingsHolder.getApplicationSettings().getIterationsMin();
     }
+
     private int getIterationsPreview() {
 
-        /* INCRESING ITERATIONS COUNT IN BIGGER SCALES, TO INCRESE QUALITY OF IMAGE*/
         if (viewLocation.getReferenceScale() > 1) {
             int iterations = (int) (settingsHolder.getApplicationSettings().getIterationsPreview() * Math.sqrt(Math.sqrt(viewLocation.getReferenceScale())));
             if (iterations < settingsHolder.getApplicationSettings().getIterationsMin()) {
@@ -332,22 +216,8 @@ public Image generateImageExport() {
         imageCanvasProperty.get().getGraphicsContext2D().drawImage(image, locationOnCanvas.getX(), locationOnCanvas.getY());
     }
 
-    public double getProgress() {
-        return (double) progressCounter.get() / (imageWidth * imageHeight);
-    }
-    public double getGenerationTime(){
-        return (double) ( System.currentTimeMillis()-timeStarted ) /1000;
-    }
-
-
-    private double getUnitsPerPixel() {
-        return viewLocation.getHorizontalSpan() / imageCanvasProperty.get().getWidth();
-    }
-
     public void setImageSize(int width, int height) {
-        this.imageHeight = height;
-        this.imageWidth = width;
-        imageCanvasProperty.set(new Canvas(imageWidth, imageHeight));
+        this.imageDimensions = new Point2D(width, height);
     }
 
     public void setExpression(RecurrentExpression recurrentExpression) {
@@ -361,12 +231,63 @@ public Image generateImageExport() {
 
     public ObjectProperty<Canvas> getImageCanvasProperty() {
         return imageCanvasProperty;
-    }
+    }    private final DoubleBinding averageProgressBinding = new DoubleBinding() {
+        {
+            super.bind(imageGeneratorsMap);
+            imageGeneratorsMap.addListener((MapChangeListener<Image, ImageGenerator>) change -> {
+                if (change.wasAdded()) {
+                    super.bind(change.getValueAdded().progressProperty());
+                    averageProgressBinding.invalidate();
+                }
+                if (change.wasRemoved()) {
+                    super.unbind(change.getValueRemoved().progressProperty());
+                }
+            });
+        }
 
-    public DoubleProperty getProgressProperty() {
-        return progressProperty;
-    }
+        @Override
+        protected double computeValue() {
+
+            if (imageGeneratorsMap.isEmpty()) return 1;
+            return imageGeneratorsMap.values().stream().mapToDouble(
+                            imageGenerator ->
+                                    imageGenerator.progressProperty().get()).average()
+                    .orElse(1);
+
+        }
+    };
+    private final DoubleBinding timeOfGenerationBinding = new DoubleBinding() {
+        {
+
+            super.bind(imageGeneratorsMap);
+            imageGeneratorsMap.addListener((MapChangeListener<Image, ImageGenerator>) change -> {
+                if (change.wasAdded()) {
+                    super.bind(change.getValueAdded().generationTimeProperty());
+                }
+                if (change.wasRemoved()) {
+                    super.unbind(change.getValueRemoved().generationTimeProperty());
+                }
+            });
+        }
+
+        @Override
+        protected double computeValue() {
+            if (imageGeneratorsMap.isEmpty()) return 0;
+            return imageGeneratorsMap.values().stream().mapToDouble(
+                            imageGenerator ->
+                                    imageGenerator.generationTimeProperty().get()).max()
+                    .orElse(0);
+
+        }
+    };
+
 }
+
+
+
+
+
+
 
 
 

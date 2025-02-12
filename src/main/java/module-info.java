@@ -22,6 +22,7 @@ module ReccurentSet {
     requires spring.aop;
     requires spring.core;
     requires javafx.swing;
+    requires scala.library;
 
 
     exports org.zeros.recurrent_set_2;
