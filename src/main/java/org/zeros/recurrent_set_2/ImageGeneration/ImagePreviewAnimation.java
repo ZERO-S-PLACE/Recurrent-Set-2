@@ -10,6 +10,7 @@ import javafx.scene.image.WritableImage;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.zeros.recurrent_set_2.Util.ImageResizer;
 
 @RequiredArgsConstructor
 @AllArgsConstructor
@@ -55,7 +56,7 @@ public class ImagePreviewAnimation extends AnimationTimer {
     @Override
     public void handle(long now) {
         if(fillWithImage) {
-                Image resizedImage=resizeImage(image, (int) resizedImageWidth, (int) resizedImageHeight);
+                Image resizedImage= ImageResizer.resizeImage(image,image.getWidth()/resizedImageWidth);
                 canvas.getGraphicsContext2D().clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
                 canvas.getGraphicsContext2D().drawImage(resizedImage, xOffset,yOffset);
 
@@ -65,19 +66,5 @@ public class ImagePreviewAnimation extends AnimationTimer {
         }
     }
 
-    private Image resizeImage(Image source, int targetWidth, int targetHeight) {
-        WritableImage resizedImage = new WritableImage(targetWidth, targetHeight);
-        PixelReader reader = source.getPixelReader();
-        PixelWriter writer = resizedImage.getPixelWriter();
 
-        double scaleX = source.getWidth() / targetWidth;
-        double scaleY = source.getHeight() / targetHeight;
-
-        for (int y = 0; y < targetHeight; y++) {
-            for (int x = 0; x < targetWidth; x++) {
-                writer.setArgb(x, y, reader.getArgb((int) (x * scaleX), (int) (y * scaleY)));
-            }
-        }
-        return resizedImage;
-    }
 }

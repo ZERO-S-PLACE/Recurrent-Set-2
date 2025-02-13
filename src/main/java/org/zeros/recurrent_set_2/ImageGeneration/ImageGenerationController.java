@@ -19,7 +19,6 @@ import org.apache.commons.math3.complex.Complex;
 import org.springframework.stereotype.Component;
 import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
 import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorCreator;
-import org.zeros.recurrent_set_2.Model.RecurrentExpression;
 import org.zeros.recurrent_set_2.Model.ViewLocation;
 
 import java.util.HashMap;
@@ -41,6 +40,30 @@ public class ImageGenerationController {
     private final DoubleProperty generationTimeProperty = new SimpleDoubleProperty(0);
     private final SettingsHolder settingsHolder;
     private final ExpressionCalculatorCreator calculatorCreator;
+    private final DoubleBinding timeOfGenerationBinding = new DoubleBinding() {
+        {
+
+            super.bind(imageGeneratorsMap);
+            imageGeneratorsMap.addListener((MapChangeListener<Image, ImageGenerator>) change -> {
+                if (change.wasAdded()) {
+                    super.bind(change.getValueAdded().generationTimeProperty());
+                }
+                if (change.wasRemoved()) {
+                    super.unbind(change.getValueRemoved().generationTimeProperty());
+                }
+            });
+        }
+
+        @Override
+        protected double computeValue() {
+            if (imageGeneratorsMap.isEmpty()) return 0;
+            return imageGeneratorsMap.values().stream().mapToDouble(
+                            imageGenerator ->
+                                    imageGenerator.generationTimeProperty().get()).max()
+                    .orElse(0);
+
+        }
+    };
     @Getter
     private ViewLocation viewLocation;
     @Getter
@@ -48,18 +71,17 @@ public class ImageGenerationController {
     private Point2D referencePointOnCanvas;
     private ExecutorService executorService;
 
-
     public ImageGenerationController(SettingsHolder settingsHolder, ExpressionCalculatorCreator calculatorCreator) {
         this.settingsHolder = settingsHolder;
         this.calculatorCreator = calculatorCreator;
         settingsHolder.getRecurrentExpressionProperty().addListener(
                 (observable, oldValue, newValue) -> {
-            this.viewLocation=settingsHolder.getRecurrentExpression().getDefaultViewLocation();
-            if(imageDimensions!=null) {
-                regenerateImage();
-            }
+                    this.viewLocation = settingsHolder.getRecurrentExpression().getDefaultViewLocation();
+                    if (imageDimensions != null) {
+                        regenerateImage();
+                    }
                 });
-        this.viewLocation=settingsHolder.getRecurrentExpression().getDefaultViewLocation();
+        this.viewLocation = settingsHolder.getRecurrentExpression().getDefaultViewLocation();
 
     }
 
@@ -69,20 +91,20 @@ public class ImageGenerationController {
 
     public void moveViewAndRegenerateBlankPart(Point2D newPosition) {
         if (referencePointOnCanvas != null) {
-            applyOffsetToExistingImage(newPosition);
-            generateMissingParts();
+            Point2D offset = newPosition.subtract(referencePointOnCanvas);
+            referencePointOnCanvas = null;
+            applyOffsetToExistingImage(offset);
+            generateMissingParts(offset);
         }
     }
 
-    private void applyOffsetToExistingImage(Point2D newPosition) {
+    private void applyOffsetToExistingImage(Point2D offset) {
 
-        Point2D offset = newPosition.subtract(referencePointOnCanvas);
-        referencePointOnCanvas = null;
         imagePartsLocationsMap.forEach((image, location) ->
                 imagePartsLocationsMap.replace(image, location.add(offset)));
         imageGeneratorsMap.forEach((image, imageGenerator) ->
                 imageGenerator.getImageGenerationPreview().updateOffset(
-                        imagePartsLocationsMap.get(image).add(offset)));
+                        imagePartsLocationsMap.get(image)));
         viewLocation.applyOffset(imageDimensions, offset);
         rewriteAllImageParts();
         imageGeneratorsMap.forEach((image, imageGenerator) ->
@@ -115,13 +137,16 @@ public class ImageGenerationController {
         regenerateImage();
     }
 
-    private void generateMissingParts() {
+    private void generateMissingParts(Point2D offset)
+    {
         regenerateImage();
     }
 
+
+
     public void regenerateImage() {
         resetVariables();
-        executorService.submit(() -> generateNewImageWithPreview(imageDimensions, new Point2D(0, 0)));
+        executorService.submit(() -> generateNewImageWithPreview(imageDimensions, new Point2D(0, 0), viewLocation));
         executorService.shutdown();
 
         //FOR TEST ONLY
@@ -155,7 +180,7 @@ public class ImageGenerationController {
         }
     }
 
-    private void generateNewImageWithPreview(Point2D imageDimensions, Point2D locationOnCanvas) {
+    private void generateNewImageWithPreview(Point2D imageDimensions, Point2D locationOnCanvas, ViewLocation viewLocation) {
         WritableImage image = new WritableImage((int) imageDimensions.getX(), (int) imageDimensions.getY());
         imagePartsLocationsMap.put(image, locationOnCanvas);
         for (int i = 0; i < 2; i++) {
@@ -173,9 +198,14 @@ public class ImageGenerationController {
             }
             removeGenerationProgressBindings();
             Platform.runLater(() -> imageGeneratorsMap.remove(image));
-            rewriteAllImageParts();
+            //rewriteAllImageParts();
         }
     }
+
+
+    /*
+    INCRESING ITERATIONS COUNT IN BIGGER SCALES, TO INCRESE QUALITY OF IMAGE
+    */
 
     private void removeGenerationProgressBindings() {
         Platform.runLater(() -> {
@@ -184,11 +214,6 @@ public class ImageGenerationController {
             generationTimeProperty.unbind();
         });
     }
-
-
-    /*
-    INCRESING ITERATIONS COUNT IN BIGGER SCALES, TO INCRESE QUALITY OF IMAGE
-    */
 
     private void createGenerationProgressBindings() {
         Platform.runLater(() -> {
@@ -262,30 +287,7 @@ public class ImageGenerationController {
 
         }
     };
-    private final DoubleBinding timeOfGenerationBinding = new DoubleBinding() {
-        {
 
-            super.bind(imageGeneratorsMap);
-            imageGeneratorsMap.addListener((MapChangeListener<Image, ImageGenerator>) change -> {
-                if (change.wasAdded()) {
-                    super.bind(change.getValueAdded().generationTimeProperty());
-                }
-                if (change.wasRemoved()) {
-                    super.unbind(change.getValueRemoved().generationTimeProperty());
-                }
-            });
-        }
-
-        @Override
-        protected double computeValue() {
-            if (imageGeneratorsMap.isEmpty()) return 0;
-            return imageGeneratorsMap.values().stream().mapToDouble(
-                            imageGenerator ->
-                                    imageGenerator.generationTimeProperty().get()).max()
-                    .orElse(0);
-
-        }
-    };
 
 
 }

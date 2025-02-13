@@ -40,12 +40,11 @@ module ReccurentSet {
     exports org.zeros.recurrent_set_2.Database.Repositories;
     exports org.zeros.recurrent_set_2.Database.Services;
     exports org.zeros.recurrent_set_2.Util;
-    exports org.zeros.recurrent_set_2.ImageSave;
 
 
     opens org.zeros.recurrent_set_2;
     opens org.zeros.recurrent_set_2.Model;
-    opens org.zeros.recurrent_set_2.ImageSave;
+    opens org.zeros.recurrent_set_2.Util;
     opens org.zeros.recurrent_set_2.Views;
     opens org.zeros.recurrent_set_2.Database.Repositories;
     opens org.zeros.recurrent_set_2.Database.Services;
@@ -53,5 +52,4 @@ module ReccurentSet {
     opens org.zeros.recurrent_set_2.ImageGeneration to javafx.graphics, spring.context, spring.core;
     opens org.zeros.recurrent_set_2.ImageGeneration.ChunkComputations to javafx.graphics, spring.context, spring.core;
     opens db.migration;
-    opens org.zeros.recurrent_set_2.Util to jakarta.persistence, javafx.graphics, org.hibernate.orm.core, spring.context, spring.core;
 }
