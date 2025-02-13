@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.complex.Complex;
 import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculator;
-import org.zeros.recurrent_set_2.ImageGeneration.BoundaryGradientColors;
+import org.zeros.recurrent_set_2.Util.BoundaryGradientColors;
 import org.zeros.recurrent_set_2.Model.ApplicationSettings;
 
 import java.util.Arrays;

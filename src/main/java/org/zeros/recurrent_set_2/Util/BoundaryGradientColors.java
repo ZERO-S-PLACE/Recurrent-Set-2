@@ -1,4 +1,4 @@
-package org.zeros.recurrent_set_2.ImageGeneration;
+package org.zeros.recurrent_set_2.Util;
 
 import javafx.scene.paint.Color;
 import org.zeros.recurrent_set_2.Model.ColorSettings;

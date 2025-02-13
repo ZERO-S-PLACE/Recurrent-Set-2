@@ -1,4 +1,4 @@
-package org.zeros.recurrent_set_2.ImageGeneration;
+package org.zeros.recurrent_set_2.JavaFxControllers.ImageGenerationControllers;
 
 import javafx.animation.AnimationTimer;
 import javafx.geometry.Point2D;

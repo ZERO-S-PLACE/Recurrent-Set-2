@@ -27,6 +27,7 @@ module ReccurentSet {
 
     exports org.zeros.recurrent_set_2;
     exports org.zeros.recurrent_set_2.JavaFxControllers;
+    exports org.zeros.recurrent_set_2.JavaFxControllers.ImageGenerationControllers;
     exports org.zeros.recurrent_set_2.Views;
     exports org.zeros.recurrent_set_2.Configuration;
     exports org.zeros.recurrent_set_2.ImageGeneration;
@@ -53,4 +54,5 @@ module ReccurentSet {
     opens org.zeros.recurrent_set_2.ImageGeneration to javafx.graphics, spring.context, spring.core;
     opens org.zeros.recurrent_set_2.ImageGeneration.ChunkComputations to javafx.graphics, spring.context, spring.core;
     opens db.migration;
+    opens org.zeros.recurrent_set_2.JavaFxControllers.ImageGenerationControllers;
 }

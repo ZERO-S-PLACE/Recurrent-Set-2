@@ -1,4 +1,4 @@
-package org.zeros.recurrent_set_2.ImageGeneration;
+package org.zeros.recurrent_set_2.JavaFxControllers.ImageGenerationControllers;
 
 import javafx.application.Platform;
 import javafx.beans.binding.DoubleBinding;
@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
 import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorCreator;
 import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorCreatorImpl;
+import org.zeros.recurrent_set_2.ImageGeneration.ImageGenerator;
+import org.zeros.recurrent_set_2.ImageGeneration.ImageGeneratorChunks;
 import org.zeros.recurrent_set_2.Model.ViewLocation;
 
 import java.util.HashMap;

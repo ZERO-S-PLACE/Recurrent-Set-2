@@ -12,7 +12,7 @@ import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
-import org.zeros.recurrent_set_2.ImageGeneration.ImageForExportGenerationController;
+import org.zeros.recurrent_set_2.JavaFxControllers.ImageGenerationControllers.ImageForExportGenerationController;
 import org.zeros.recurrent_set_2.Util.ImageSaver;
 import org.zeros.recurrent_set_2.Model.RecurrentExpression;
 import org.zeros.recurrent_set_2.Model.ViewLocation;

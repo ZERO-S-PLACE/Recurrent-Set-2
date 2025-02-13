@@ -8,15 +8,16 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.image.WritableImage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.complex.Complex;
-import org.jetbrains.annotations.NotNull;
 import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
 import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculator;
 import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorCreator;
 import org.zeros.recurrent_set_2.ImageGeneration.ChunkComputations.ImageChunk;
 import org.zeros.recurrent_set_2.ImageGeneration.ChunkComputations.ParallelImageChunkGenerator;
+import org.zeros.recurrent_set_2.JavaFxControllers.ImageGenerationControllers.ImagePreviewAnimation;
 import org.zeros.recurrent_set_2.Model.ApplicationSettings;
 import org.zeros.recurrent_set_2.Model.RecurrentExpression;
 import org.zeros.recurrent_set_2.Model.ViewLocation;
+import org.zeros.recurrent_set_2.Util.BoundaryGradientColors;
 
 import java.util.HashSet;
 import java.util.Set;

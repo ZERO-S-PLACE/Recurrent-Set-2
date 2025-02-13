@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.math3.complex.Complex;
 import org.springframework.stereotype.Component;
 import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
-import org.zeros.recurrent_set_2.ImageGeneration.ImageGenerationController;
+import org.zeros.recurrent_set_2.JavaFxControllers.ImageGenerationControllers.ImageGenerationController;
 
 import java.net.URL;
 import java.util.ResourceBundle;

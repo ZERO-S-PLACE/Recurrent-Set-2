@@ -5,8 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
-import org.zeros.recurrent_set_2.ImageGeneration.ImageGenerationController;
-import org.zeros.recurrent_set_2.Model.RecurrentExpression;
+import org.zeros.recurrent_set_2.JavaFxControllers.ImageGenerationControllers.ImageGenerationController;
 
 import java.util.ArrayList;
 
