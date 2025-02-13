@@ -18,6 +18,7 @@ public class ColorSettings {
 
     @Transient
     public static final ColorSettings DEFAULT = ColorSettings.builder()
+            .areDefaultSettings(true)
             .name("DEFAULT")
             .build();
 

@@ -10,7 +10,7 @@ public interface ColorSettingsService {
     void updateColorSettings(ColorSettings colorSettings);
     List<ColorSettings> getAllColorSettings();
     void loadAndApplyColorSettings(Long settingsId);
-    void setDefaultColorSettings(ColorSettings colorSettings);
+    void setDefaultColorSettings(Long settingsId);
     ColorSettings getDefaultColorSettings();
     void restorePredefinedSettings();
 

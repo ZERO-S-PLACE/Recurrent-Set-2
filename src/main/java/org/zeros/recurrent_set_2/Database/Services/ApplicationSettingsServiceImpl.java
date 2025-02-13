@@ -37,7 +37,7 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
     @Override
     @Transactional
     public void deleteSettings(Long settingsId) {
-        if(Objects.equals(settingsHolder.getApplicationSettings().getId(), settingsId)) {
+        if(!Objects.equals(settingsHolder.getApplicationSettings().getId(), settingsId)) {
             applicationSettingsRepository.deleteById(settingsId);
         }
         throw new IllegalArgumentException("Cannot delete currently selected application settings");
@@ -52,7 +52,8 @@ public class ApplicationSettingsServiceImpl implements ApplicationSettingsServic
         if(applicationSettings.getId() == null) {
             throw new IllegalArgumentException("Settings doesn't exist");
         }
-        if(applicationSettingsRepository.findByName(applicationSettings.getName()).isPresent()) {
+        if(applicationSettingsRepository.findByName(applicationSettings.getName()).isPresent()&&
+                !applicationSettingsRepository.findByName(applicationSettings.getName()).get().getId().equals(applicationSettings.getId())) {
             throw new IllegalArgumentException("Settings with name " + applicationSettings.getName() + " already exists");
         }
         applicationSettingsRepository.save(applicationSettings);

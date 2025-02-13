@@ -42,9 +42,8 @@ public class ImageGenerationController {
     private final SettingsHolder settingsHolder;
     private final ExpressionCalculatorCreator calculatorCreator;
     @Getter
-    private RecurrentExpression recurrentExpression;
-    @Getter
     private ViewLocation viewLocation;
+    @Getter
     private Point2D imageDimensions;
     private Point2D referencePointOnCanvas;
     private ExecutorService executorService;
@@ -53,6 +52,14 @@ public class ImageGenerationController {
     public ImageGenerationController(SettingsHolder settingsHolder, ExpressionCalculatorCreator calculatorCreator) {
         this.settingsHolder = settingsHolder;
         this.calculatorCreator = calculatorCreator;
+        settingsHolder.getRecurrentExpressionProperty().addListener(
+                (observable, oldValue, newValue) -> {
+            this.viewLocation=settingsHolder.getRecurrentExpression().getDefaultViewLocation();
+            if(imageDimensions!=null) {
+                regenerateImage();
+            }
+                });
+        this.viewLocation=settingsHolder.getRecurrentExpression().getDefaultViewLocation();
 
     }
 
@@ -134,14 +141,18 @@ public class ImageGenerationController {
         imageGeneratorsMap.forEach((image, imageGenerator) -> imageGenerator.abandonGenerationNow());
         imageGeneratorsMap.clear();
         if (executorService != null) {
-            executorService.shutdownNow();
-            try {
-                executorService.awaitTermination(10, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            stopNow();
         }
         executorService = Executors.newSingleThreadExecutor();
+    }
+
+    public void stopNow() {
+        executorService.shutdownNow();
+        try {
+            executorService.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void generateNewImageWithPreview(Point2D imageDimensions, Point2D locationOnCanvas) {
@@ -150,7 +161,7 @@ public class ImageGenerationController {
         for (int i = 0; i < 2; i++) {
 
             int iterations = i == 0 ? getIterationsPreview() : getIterationsInView();
-            ImageGeneratorChunks imageGenerator = new ImageGeneratorChunks(settingsHolder, calculatorCreator, recurrentExpression, viewLocation, image, iterations);
+            ImageGeneratorChunks imageGenerator = new ImageGeneratorChunks(settingsHolder, calculatorCreator, viewLocation, image, iterations);
             Platform.runLater(() -> imageGeneratorsMap.put(image, imageGenerator));
             createGenerationProgressBindings();
             imageGenerator.addImageGenerationPreview(imageCanvasProperty.get());
@@ -220,11 +231,6 @@ public class ImageGenerationController {
         this.imageDimensions = new Point2D(width, height);
     }
 
-    public void setExpression(RecurrentExpression recurrentExpression) {
-        this.recurrentExpression = recurrentExpression;
-        this.viewLocation = recurrentExpression.getDefaultViewLocation();
-    }
-
     public void changeLocation(ViewLocation location) {
         this.viewLocation = location;
     }
@@ -280,6 +286,7 @@ public class ImageGenerationController {
 
         }
     };
+
 
 }
 

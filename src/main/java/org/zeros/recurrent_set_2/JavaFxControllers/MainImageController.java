@@ -6,18 +6,17 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Point2D;
+import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.*;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.math3.complex.Complex;
 import org.springframework.stereotype.Component;
 import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
 import org.zeros.recurrent_set_2.ImageGeneration.ImageGenerationController;
-import org.zeros.recurrent_set_2.Model.RecurrentExpression;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -30,11 +29,14 @@ public class MainImageController implements Initializable {
 
     @FXML
     public BorderPane mainImageContainer;
+    public Pane centerPane;
     private final ImageGenerationController imageGenerationController;
     private final SettingsHolder settingsHolder;
     private final SaveFileDialogController saveFileDialogController;
 
     private final EventHandler<MouseEvent> imageSlideListener = this::moveImage;
+    private boolean locationInspectorOn=false;
+    private Label locationInspector;
 
 
 
@@ -45,9 +47,62 @@ public class MainImageController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        addCenterPaneAndBackground();
+        addCrosshairCursor();
+        addLocationInspector();
         addResizeHandling();
         addDragListeners();
         addScrollListeners();
+        addProgressBarAndTime();
+    }
+
+    private void addCrosshairCursor() {
+        mainImageContainer.setOnMouseEntered(event -> { mainImageContainer.setCursor(Cursor.CROSSHAIR);});
+        mainImageContainer.setOnMouseExited(event -> { mainImageContainer.setCursor(Cursor.DEFAULT);});
+    }
+
+    private void addCenterPaneAndBackground() {
+        centerPane=new Pane();
+        mainImageContainer.setCenter(centerPane);
+        mainImageContainer.setBackground(new Background(new BackgroundFill(settingsHolder.getColorSettings().getBackgroundColor(), null, null)));
+    }
+
+    private void addLocationInspector() {
+        mainImageContainer.setOnMousePressed(event->{
+            if(event.getButton()== MouseButton.SECONDARY) {
+
+                if(locationInspectorOn) {
+                    centerPane.getChildren().remove(locationInspector);
+                    mainImageContainer.removeEventHandler(MouseEvent.MOUSE_MOVED,addLocationInspector(locationInspector));
+                    locationInspectorOn=false;
+                }else {
+                    locationInspector = new Label();
+                    locationInspector.setStyle(
+                            "-fx-background-color:rgba(211,211,211,0.38);" +
+                            "-fx-text-fill: rgba(179,179,179,0.94);" +
+                            "-fx-padding: 2,5,2,5;" +
+                            "-fx-background-radius: 2;");
+                    centerPane.getChildren().add(locationInspector);
+                    locationInspector.setViewOrder(-1);
+                    mainImageContainer.addEventHandler(MouseEvent.MOUSE_MOVED,addLocationInspector(locationInspector));
+                    locationInspectorOn=true;
+                }
+            }
+        });
+    }
+
+    private  EventHandler<MouseEvent> addLocationInspector(Label mouseLabel) {
+        return event -> {
+            Complex point = imageGenerationController.getViewLocation()
+                    .getPointOnSetCoordinate(imageGenerationController.getImageDimensions(),new Point2D(event.getX(),event.getY()));
+            mouseLabel.setText(  "R: " + point.getReal() + "\nI: " + point.getImaginary());
+            mouseLabel.setLayoutX(event.getX() + 10);
+            mouseLabel.setLayoutY(event.getY() - mouseLabel.getHeight()-10);
+            Platform.requestNextPulse();
+        };
+    }
+
+    private void addProgressBarAndTime() {
         ProgressBar progressBar = new ProgressBar();
         progressBar.prefWidthProperty().bind(Bindings.createDoubleBinding(()->mainImageContainer.widthProperty().get()-100,mainImageContainer.widthProperty()));
         progressBar.progressProperty().addListener(((observable, oldValue, newValue) ->
@@ -68,7 +123,6 @@ public class MainImageController implements Initializable {
                 imageGenerationController.getGenerationTimeProperty()
         ));
         mainImageContainer.setBottom(new HBox(progressBar, timeLabel));
-        mainImageContainer.setBackground(new Background(new BackgroundFill(settingsHolder.getColorSettings().getBackgroundColor(), null, null)));
     }
 
     private void addScrollListeners() {
@@ -91,8 +145,8 @@ public class MainImageController implements Initializable {
                     mainImageContainer.prefHeightProperty().bind(mainImageContainer.getScene().heightProperty());
 
         imageGenerationController.getImageCanvasProperty().addListener((observable, oldValue, newValue) -> {
-            mainImageContainer.getChildren().remove(oldValue);
-            mainImageContainer.setCenter(newValue);
+            centerPane.getChildren().remove(oldValue);
+            centerPane.getChildren().add(newValue);
         });});
 
         mainImageContainer.widthProperty().addListener((observable, oldValue, newValue) -> {
@@ -104,7 +158,8 @@ public class MainImageController implements Initializable {
     private void addDragListeners() {
         mainImageContainer.setOnMouseClicked(mouseEvent -> {
             if(mouseEvent.isControlDown()){
-                saveFileDialogController.saveFileDialog(imageGenerationController.getViewLocation(),imageGenerationController.getRecurrentExpression());
+                imageGenerationController.stopNow();
+                saveFileDialogController.saveFileDialog(imageGenerationController.getViewLocation(),settingsHolder.getRecurrentExpression());
             }
         });
 
@@ -131,9 +186,8 @@ public class MainImageController implements Initializable {
     }
 
 
-    public void generateImage(RecurrentExpression recurrentExpression) {
+    public void generateImage() {
         imageGenerationController.setImageSize((int) mainImageContainer.getWidth(), (int) mainImageContainer.getHeight());
-        imageGenerationController.setExpression(recurrentExpression);
         imageGenerationController.regenerateImage();
     }
 }

@@ -31,25 +31,21 @@ public class ImageForExportGenerationController {
     private Canvas previewCanvas;
 
 
-    public Image generateNewImageExport(ViewLocation viewLocation, RecurrentExpression recurrentExpression) {
+    public Image generateNewImageExport(ViewLocation viewLocation) {
 
         WritableImage image = new WritableImage(settingsHolder.getApplicationSettings().getExportWidth(), settingsHolder.getApplicationSettings().getExportHeight());
 
         int iterations = settingsHolder.getApplicationSettings().getIterationsExport();
         imageGenerator = new ImageGeneratorChunks(settingsHolder, calculatorCreator,
-                recurrentExpression, viewLocation, image, iterations);
+                 viewLocation, image, iterations);
 
         if (previewCanvas != null) {
             imageGenerator.addImageGenerationPreview(previewCanvas);
             imageGenerator.getImageGenerationPreview().setFillWithImage(true);
         }
-
         bindGenerationProgressProperties();
         imageGenerator.generateImage();
         unbindGenerationProgressProperties();
-
-        log.atInfo().log("Image for export generated");
-
         return image;
     }
 

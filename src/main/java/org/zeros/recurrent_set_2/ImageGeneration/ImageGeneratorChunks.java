@@ -32,7 +32,6 @@ public class ImageGeneratorChunks implements ImageGenerator {
     private final DoubleProperty generationTimeProperty = new SimpleDoubleProperty(0);
     private final SettingsHolder settingsHolder;
     private final ExpressionCalculatorCreator expressionCalculatorCreator;
-    private final RecurrentExpression recurrentExpression;
     private final ViewLocation viewLocation;
     private final WritableImage image;
     private final int iterations;
@@ -41,10 +40,9 @@ public class ImageGeneratorChunks implements ImageGenerator {
     private final ThreadPoolExecutor executorService;
     private Long timeStarted;
 
-    public ImageGeneratorChunks(SettingsHolder settingsHolder, ExpressionCalculatorCreator expressionCalculatorCreator, RecurrentExpression recurrentExpression, ViewLocation viewLocation, WritableImage image, int iterations) {
+    public ImageGeneratorChunks(SettingsHolder settingsHolder, ExpressionCalculatorCreator expressionCalculatorCreator, ViewLocation viewLocation, WritableImage image, int iterations) {
         this.settingsHolder = settingsHolder;
         this.expressionCalculatorCreator = expressionCalculatorCreator;
-        this.recurrentExpression = recurrentExpression;
         this.viewLocation = viewLocation;
         this.image = image;
         this.iterations = iterations;
@@ -78,6 +76,7 @@ public class ImageGeneratorChunks implements ImageGenerator {
     public Image generateImage() {
         logGenerationStarted();
         timeStarted = System.currentTimeMillis();
+        RecurrentExpression recurrentExpression = settingsHolder.getRecurrentExpression();
         int columnsCount = 1+(int) (image.getWidth() / settingsHolder.getApplicationSettings().getMaxChunkBorderSize());
         int rowsCount = 1+(int) (image.getHeight() / settingsHolder.getApplicationSettings().getMaxChunkBorderSize());
         int columnWidth = (int) (image.getWidth() / columnsCount);

@@ -41,17 +41,17 @@ public class ApplicationSettings {
     @Builder.Default
     @Max(Integer.MAX_VALUE/2)
     @Min(1)
-    private Integer iterationsExport =50;
+    private Integer iterationsExport =3000;
     @NonNull
     @Builder.Default
     @Max(20000)
     @Min(100)
-    private Integer exportHeight =2000;
+    private Integer exportHeight =2160;
     @NonNull
     @Builder.Default
     @Max(20000)
     @Min(100)
-    private Integer exportWidth = 3000;
+    private Integer exportWidth = 3840;
     @NonNull
     @Builder.Default
     @Max(Integer.MAX_VALUE/2)
@@ -77,6 +77,7 @@ public class ApplicationSettings {
     @Transient
     public static final ApplicationSettings DEFAULT = ApplicationSettings.builder()
             .name("DEFAULT")
+            .areDefaultSettings(true)
             .build();
 
     @Transient

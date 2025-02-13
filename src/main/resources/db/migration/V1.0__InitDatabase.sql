@@ -34,7 +34,7 @@ CREATE TABLE color_settings
 CREATE TABLE recurrent_expression
 (
     id                       BIGINT AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    name                     VARCHAR(255)          NOT NULL UNIQUE,
+    name                     VARCHAR(255)          NOT NULL,
     first_expression         VARCHAR(255)          NOT NULL,
     recurrent_expression     VARCHAR(255)          NOT NULL,
     position_variable_name   VARCHAR(255)          NOT NULL,
