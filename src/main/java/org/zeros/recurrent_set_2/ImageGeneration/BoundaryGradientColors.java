@@ -20,17 +20,14 @@ public class BoundaryGradientColors {
         generateColorMaps();
     }
 
-
     private void generateColorMaps() {
         createGradient();
         mapGradientToArgb();
     }
 
     private void mapGradientToArgb() {
-        gradientColors.forEach((key, value) ->
-                gradientColorsArgb.put(key, mapColorToArgb(value)));
+        gradientColors.forEach((key, value) -> gradientColorsArgb.put(key, mapColorToArgb(value)));
     }
-
 
     private void createGradient() {
         int minIterations = colorSettings.getMinIterationsSatisfiedToBeVisible();

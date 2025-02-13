@@ -12,8 +12,6 @@ import java.util.Optional;
 
 @Repository
 public interface ColorSettingsRepository extends JpaRepository<ColorSettings, Long> {
-
     Optional<ColorSettings> findByName(@NonNull @NotBlank String name);
-
     Optional<ColorSettings> findByAreDefaultSettings(boolean areDefaultSettings);
 }

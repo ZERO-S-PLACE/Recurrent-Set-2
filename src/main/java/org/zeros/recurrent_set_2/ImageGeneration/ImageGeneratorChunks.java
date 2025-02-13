@@ -5,7 +5,6 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.complex.Complex;
@@ -28,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public class ImageGeneratorChunks implements ImageGenerator {
+
     private final DoubleProperty progressProperty = new SimpleDoubleProperty(0);
     private final DoubleProperty generationTimeProperty = new SimpleDoubleProperty(0);
     private final SettingsHolder settingsHolder;
@@ -40,13 +40,17 @@ public class ImageGeneratorChunks implements ImageGenerator {
     private final ThreadPoolExecutor executorService;
     private Long timeStarted;
 
-    public ImageGeneratorChunks(SettingsHolder settingsHolder, ExpressionCalculatorCreator expressionCalculatorCreator, ViewLocation viewLocation, WritableImage image, int iterations) {
+    public ImageGeneratorChunks(SettingsHolder settingsHolder,
+                                ExpressionCalculatorCreator expressionCalculatorCreator,
+                                ViewLocation viewLocation,
+                                WritableImage image,
+                                int iterations) {
         this.settingsHolder = settingsHolder;
         this.expressionCalculatorCreator = expressionCalculatorCreator;
         this.viewLocation = viewLocation;
         this.image = image;
         this.iterations = iterations;
-        executorService=getCustomThreadExecutor();
+        executorService = getCustomThreadExecutor();
         imagePreviewAnimation = new ImagePreviewAnimation();
     }
 
@@ -73,23 +77,29 @@ public class ImageGeneratorChunks implements ImageGenerator {
     }
 
     @Override
-    public Image generateImage() {
+    public void generateImage() {
+
         logGenerationStarted();
         timeStarted = System.currentTimeMillis();
+
         RecurrentExpression recurrentExpression = settingsHolder.getRecurrentExpression();
-        int columnsCount = 1+(int) (image.getWidth() / settingsHolder.getApplicationSettings().getMaxChunkBorderSize());
-        int rowsCount = 1+(int) (image.getHeight() / settingsHolder.getApplicationSettings().getMaxChunkBorderSize());
+
+        int columnsCount = 1 + (int) (image.getWidth() / settingsHolder.getApplicationSettings().getMaxChunkBorderSize());
+        int rowsCount = 1 + (int) (image.getHeight() / settingsHolder.getApplicationSettings().getMaxChunkBorderSize());
         int columnWidth = (int) (image.getWidth() / columnsCount);
         int rowHeight = (int) (image.getHeight() / rowsCount);
+
         Point2D imageDimensions = new Point2D(image.getWidth(), image.getHeight());
+
         double unitsPerPixel = viewLocation.getUnitsPerPixel(imageDimensions);
+
         Complex topLeftPointCoordinate = viewLocation.getTopLeftPointCoordinate(imageDimensions);
 
-        BoundaryGradientColors boundaryGradientColors = new BoundaryGradientColors(settingsHolder.getColorSettings(),iterations);
+        BoundaryGradientColors boundaryGradientColors = new BoundaryGradientColors(settingsHolder.getColorSettings(), iterations);
 
         Set<Runnable> tasks = new HashSet<>();
-        for (int column = 0; column < columnsCount; column++) {
 
+        for (int column = 0; column < columnsCount; column++) {
             for (int row = 0; row < rowsCount; row++) {
                 int rowCurrent = row;
                 int columnCurrent = column;
@@ -101,6 +111,7 @@ public class ImageGeneratorChunks implements ImageGenerator {
                         expressionCalculatorCreator.getExpressionCalculator(
                                 recurrentExpression.getFirstExpression(),
                                 recurrentExpression.getVariableNames());
+
                 tasks.add(() -> ParallelImageChunkGenerator.builder()
                         .imageChunk(ImageChunk.builder()
                                 .columnsEnd((columnCurrent + 1) * columnWidth)
@@ -120,26 +131,26 @@ public class ImageGeneratorChunks implements ImageGenerator {
                         .topLeftPoint(topLeftPointCoordinate)
                         .build()
                         .compute());
-
             }
         }
+
         if (Thread.currentThread().isInterrupted()) {
             log.atInfo().log("Skipped generation of image before startup");
-            return null;
+            return;
         }
+
         tasks.forEach(executorService::submit);
         imagePreviewAnimation.start();
-        if (awaitGenerationFinished()) return null;
-        clearTempVariables();
-        return image;
-    }
 
-    private void clearTempVariables() {
+        awaitGenerationFinished();
+
         executorService.shutdown();
         imagePreviewAnimation.stop();
+
     }
 
-    private boolean awaitGenerationFinished() {
+
+    private void awaitGenerationFinished() {
         int imageArea = (int) (image.getWidth() * image.getHeight());
         int logsCounter = 0;
         while (executorService.getActiveCount() > 0) {
@@ -147,13 +158,15 @@ public class ImageGeneratorChunks implements ImageGenerator {
             if (Thread.currentThread().isInterrupted()) {
                 log.atInfo().log("Skipped generation of image");
                 executorService.shutdownNow();
-                return true;
+                return;
             }
-            if ((System.currentTimeMillis() - timeStarted)*
-                    ApplicationSettings.IMAGE_GENERATION_PROPERTIES_REFRESH_FREQUENCY/1000 > logsCounter) {
+            if ((System.currentTimeMillis() - timeStarted) *
+                    ApplicationSettings.IMAGE_GENERATION_PROPERTIES_REFRESH_FREQUENCY / 1000 > logsCounter) {
 
-                Platform.runLater(()->{progressProperty.set((double) progressCounter.get() / imageArea);
-                generationTimeProperty.set((double) (System.currentTimeMillis() - timeStarted) / 1000);});
+                Platform.runLater(() -> {
+                    progressProperty.set((double) progressCounter.get() / imageArea);
+                    generationTimeProperty.set((double) (System.currentTimeMillis() - timeStarted) / 1000);
+                });
 
                 log.atTrace().log("Generating image .. " +
                         String.format("%.2f", progressProperty.get() * 100) + "% " +
@@ -162,16 +175,6 @@ public class ImageGeneratorChunks implements ImageGenerator {
             }
             Thread.onSpinWait();
         }
-        return false;
-    }
-
-    private @NotNull ThreadPoolExecutor getCustomThreadExecutor() {
-        return new ThreadPoolExecutor(
-                settingsHolder.getApplicationSettings().getNumberOfThreads(),
-                Integer.MAX_VALUE,
-                60L, TimeUnit.DAYS,
-                new LinkedTransferQueue<>()
-        );
     }
 
     @Override
@@ -185,5 +188,14 @@ public class ImageGeneratorChunks implements ImageGenerator {
         log.atInfo().log("Size: " + image.getWidth() + "x" + image.getHeight());
         log.atInfo().log("Scale: " + String.format("%.2f", viewLocation.getReferenceScale()));
         log.atInfo().log("Iterations: " + iterations);
+    }
+
+    private ThreadPoolExecutor getCustomThreadExecutor() {
+        return new ThreadPoolExecutor(
+                settingsHolder.getApplicationSettings().getNumberOfThreads(),
+                Integer.MAX_VALUE,
+                60L, TimeUnit.DAYS,
+                new LinkedTransferQueue<>()
+        );
     }
 }

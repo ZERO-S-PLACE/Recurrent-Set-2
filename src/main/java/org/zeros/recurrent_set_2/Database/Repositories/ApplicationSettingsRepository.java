@@ -8,8 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface ApplicationSettingsRepository extends JpaRepository<ApplicationSettings, Long> {
-
     Optional<ApplicationSettings> findByName(String name);
-
     Optional<ApplicationSettings> findByAreDefaultSettings(boolean b);
 }

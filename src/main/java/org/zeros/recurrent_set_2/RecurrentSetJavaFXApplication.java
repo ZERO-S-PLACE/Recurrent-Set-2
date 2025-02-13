@@ -11,7 +11,6 @@ import org.zeros.recurrent_set_2.Views.ViewFactory;
 @Slf4j
 public class RecurrentSetJavaFXApplication extends Application {
 
-
 	private ConfigurableApplicationContext context;
 
 	@Override

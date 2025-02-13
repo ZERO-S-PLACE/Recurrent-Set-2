@@ -25,8 +25,6 @@ import java.util.ResourceBundle;
 @RequiredArgsConstructor
 public class MainImageController implements Initializable {
 
-
-
     @FXML
     public BorderPane mainImageContainer;
     public Pane centerPane;

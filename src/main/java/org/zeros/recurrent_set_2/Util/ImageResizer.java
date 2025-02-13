@@ -6,6 +6,7 @@ import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 
 public class ImageResizer {
+
     public static Image resizeImage(Image source, double scale) {
         int targetWidth = (int) (source.getWidth() /scale);
         int targetHeight = (int) (source.getHeight() /scale);

@@ -9,13 +9,12 @@ import org.zeros.recurrent_set_2.Model.RecurrentExpression;
 @Configuration(proxyBeanMethods=false)
 public class SettingsConfiguration {
 
-
     @Bean
     public SettingsHolder settingsHolder() {
-        SettingsHolder settingsHolder =new SettingsHolder(
+
+        return new SettingsHolder(
                 ApplicationSettings.DEFAULT,
                 ColorSettings.DEFAULT,
                 RecurrentExpression.DEVIL_SHAPE);
-        return settingsHolder;
     }
 }

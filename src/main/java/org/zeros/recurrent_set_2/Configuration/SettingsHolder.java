@@ -11,6 +11,7 @@ import org.zeros.recurrent_set_2.Model.RecurrentExpression;
 @Getter
 @Setter
 public class SettingsHolder {
+
     private ApplicationSettings applicationSettings;
     private ColorSettings colorSettings;
     private final ObjectProperty<RecurrentExpression> recurrentExpressionProperty;

@@ -5,8 +5,5 @@ import org.apache.commons.math3.complex.Complex;
 
 public class SinCalculation implements OneFactorCalculation {
     @Override
-    public Complex calculate(Complex z1) {
-
-            return z1.sin();
-    }
+    public Complex calculate(Complex z1) {return z1.sin();}
 }

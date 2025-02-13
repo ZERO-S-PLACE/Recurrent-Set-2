@@ -13,39 +13,47 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
 import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorCreator;
-import org.zeros.recurrent_set_2.Model.RecurrentExpression;
 import org.zeros.recurrent_set_2.Model.ViewLocation;
 
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class ImageForExportGenerationController {
+    private final SettingsHolder settingsHolder;
+    private final ExpressionCalculatorCreator calculatorCreator;
     @Getter
     private final DoubleProperty progressProperty = new SimpleDoubleProperty(1);
     @Getter
     private final DoubleProperty generationTimeProperty = new SimpleDoubleProperty(0);
-    private final SettingsHolder settingsHolder;
-    private final ExpressionCalculatorCreator calculatorCreator;
-    private ImageGenerator imageGenerator;
     @Setter
     private Canvas previewCanvas;
+    private ImageGenerator imageGenerator;
 
 
     public Image generateNewImageExport(ViewLocation viewLocation) {
 
-        WritableImage image = new WritableImage(settingsHolder.getApplicationSettings().getExportWidth(), settingsHolder.getApplicationSettings().getExportHeight());
+        WritableImage image = new WritableImage(
+                settingsHolder.getApplicationSettings().getExportWidth(),
+                settingsHolder.getApplicationSettings().getExportHeight());
 
         int iterations = settingsHolder.getApplicationSettings().getIterationsExport();
-        imageGenerator = new ImageGeneratorChunks(settingsHolder, calculatorCreator,
-                 viewLocation, image, iterations);
+
+        imageGenerator = new ImageGeneratorChunks(
+                settingsHolder,
+                calculatorCreator,
+                viewLocation,
+                image,
+                iterations);
 
         if (previewCanvas != null) {
             imageGenerator.addImageGenerationPreview(previewCanvas);
             imageGenerator.getImageGenerationPreview().setFillWithImage(true);
         }
+
         bindGenerationProgressProperties();
         imageGenerator.generateImage();
         unbindGenerationProgressProperties();
+
         return image;
     }
 
@@ -64,6 +72,5 @@ public class ImageForExportGenerationController {
             generationTimeProperty.setValue(0);
         });
     }
-
 }
 

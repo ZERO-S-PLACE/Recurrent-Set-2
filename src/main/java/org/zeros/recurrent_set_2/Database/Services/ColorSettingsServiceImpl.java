@@ -1,5 +1,6 @@
 package org.zeros.recurrent_set_2.Database.Services;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,10 +21,7 @@ public class ColorSettingsServiceImpl implements ColorSettingsService {
 
     @Override
     @Transactional
-    public void addNewColorSettings(ColorSettings colorSettings) {
-        if (colorSettings == null) {
-            throw new IllegalArgumentException("No application settings provided");
-        }
+    public void addNewColorSettings(@NonNull ColorSettings colorSettings) {
         if (colorSettings.getId() != null) {
             throw new IllegalArgumentException("Settings already saved");
         }
@@ -35,7 +33,7 @@ public class ColorSettingsServiceImpl implements ColorSettingsService {
 
     @Override
     @Transactional
-    public void deleteColorSettings(Long settingsId) {
+    public void deleteColorSettings(@NonNull Long settingsId) {
         if (!Objects.equals(settingsHolder.getColorSettings().getId(), settingsId)) {
             colorSettingsRepository.deleteById(settingsId);
         }
@@ -44,19 +42,15 @@ public class ColorSettingsServiceImpl implements ColorSettingsService {
 
     @Override
     @Transactional
-    public void updateColorSettings(ColorSettings colorSettings) {
-        if (colorSettings == null) {
-            throw new IllegalArgumentException("No application settings provided");
-        }
+    public void updateColorSettings(@NonNull ColorSettings colorSettings) {
         if (colorSettings.getId() == null) {
             throw new IllegalArgumentException("Settings doesn't exist");
         }
         if (colorSettingsRepository.findByName(colorSettings.getName()).isPresent()
-                &&!colorSettingsRepository.findByName(colorSettings.getName()).get().getId().equals(colorSettings.getId())) {
+                && !colorSettingsRepository.findByName(colorSettings.getName()).get().getId().equals(colorSettings.getId())) {
             throw new IllegalArgumentException("Settings with name " + colorSettings.getName() + " already exists");
         }
         colorSettingsRepository.save(colorSettings);
-
     }
 
     @Override
@@ -67,10 +61,7 @@ public class ColorSettingsServiceImpl implements ColorSettingsService {
 
     @Override
     @Transactional
-    public void loadAndApplyColorSettings(Long settingsId) {
-        if (settingsId == null) {
-            throw new IllegalArgumentException("No settings id provided");
-        }
+    public void loadAndApplyColorSettings(@NonNull Long settingsId) {
         ColorSettings colorSettings = colorSettingsRepository.findById(settingsId)
                 .orElseThrow(() -> new IllegalArgumentException("Settings with id " + settingsId + " doesn't exist"));
         settingsHolder.setColorSettings(colorSettings);
@@ -85,10 +76,7 @@ public class ColorSettingsServiceImpl implements ColorSettingsService {
 
     @Override
     @Transactional
-    public void setDefaultColorSettings(Long settingsId) {
-        if (settingsId == null) {
-            throw new IllegalArgumentException("No settings id provided");
-        }
+    public void setDefaultColorSettings(@NonNull Long settingsId) {
         ColorSettings colorSettings = colorSettingsRepository.findById(settingsId)
                 .orElseThrow(() -> new IllegalArgumentException("Settings with id " + settingsId + " doesn't exist"));
         for (ColorSettings settings : getAllColorSettings()) {

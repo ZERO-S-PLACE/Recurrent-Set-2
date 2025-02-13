@@ -6,6 +6,7 @@ import javafx.scene.paint.Color;
 
 @Converter(autoApply = true)
 public class ColorConverter implements AttributeConverter<Color, String> {
+
     @Override
     public String convertToDatabaseColumn(Color color) {
         return (color == null) ? null :

@@ -43,6 +43,7 @@ module ReccurentSet {
 
 
     opens org.zeros.recurrent_set_2;
+    opens org.zeros.recurrent_set_2.EquationParser;
     opens org.zeros.recurrent_set_2.Model;
     opens org.zeros.recurrent_set_2.Util;
     opens org.zeros.recurrent_set_2.Views;

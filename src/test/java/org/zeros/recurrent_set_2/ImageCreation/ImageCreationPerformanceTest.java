@@ -24,7 +24,6 @@ public class ImageCreationPerformanceTest {
             holder.getApplicationSettings().setMinChunkBorderSize(i);
             long start = System.currentTimeMillis();
             controller.setImageSize(4000,2000);
-            controller.setExpression(RecurrentExpression.X1_SHAPE);
             controller.regenerateImage();
             long end = System.currentTimeMillis();
             chunkSizeTimeValuesList.add(new Point2D(i,end-start));
@@ -46,7 +45,6 @@ public class ImageCreationPerformanceTest {
             holder.getApplicationSettings().setMaxChunkBorderSize(i);
             long start = System.currentTimeMillis();
             controller.setImageSize(4000,2000);
-            controller.setExpression(RecurrentExpression.X1_SHAPE);
             controller.regenerateImage();
             long end = System.currentTimeMillis();
             chunkSizeTimeValuesList.add(new Point2D(i,end-start));

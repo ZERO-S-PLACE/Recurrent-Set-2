@@ -15,9 +15,21 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@SuppressWarnings("SuspiciousNameCombination")
 @Slf4j
 @Builder
 public class ParallelImageChunkGenerator {
+
+     /*
+    ALGORITHM TO OPTIMIZE COMPUTATIONS:
+
+    ASSUMPTION - recurrent sets doesn't have inner, closed areas
+
+    If all points on borders of a chunk belong to the set, whole chunk belongs to the set,
+    else,divide chunk and repeat this check for sub chunks.
+    Repeat this until they are smaller that specified size - in this case compute remaining points normally
+
+    */
 
     private final ImageChunk imageChunk;
     private final Complex topLeftPoint;
@@ -32,13 +44,7 @@ public class ParallelImageChunkGenerator {
     private final AtomicInteger progressCounter;
     private final int area;
 
-    /*
-    ALGORITHM TO OPTIMIZE COMPUTATIONS:
-    ASSUMPTION - recurrent sets doesn't have inner, closed areas
-    If all points on borders of a chunk belong to the set, whole chunk belongs to the set,
-    else, divide repeat this check for sub chunks, repeat this until they are smaller that specified size-
-    in this case compute all points normally
-    */
+
 
     public void compute() {
         int[] leftBorder = getIterationsSatisfiedAtColumn(imageChunk.columnsStart(), imageChunk.rowsStart(), imageChunk.rowsEnd());
@@ -46,19 +52,19 @@ public class ParallelImageChunkGenerator {
         int[] topBorder = getIterationsSatisfiedAtRow(imageChunk.rowsStart(), imageChunk.columnsStart(), imageChunk.columnsEnd());
         int[] bottomBorder = getIterationsSatisfiedAtRow(imageChunk.rowsEnd(), imageChunk.columnsStart(), imageChunk.columnsEnd());
 
-        computeForChunk(imageChunk,
-                new ImageChunkBorders(leftBorder, rightBorder, topBorder, bottomBorder));
+        computeForChunk(imageChunk, new ImageChunkBorders(leftBorder, rightBorder, topBorder, bottomBorder));
     }
 
     private void computeForChunk(ImageChunk imageChunk, ImageChunkBorders imageChunkBorders) {
-        if (Thread.currentThread().isInterrupted()) {return;}
+        if (Thread.currentThread().isInterrupted()) {
+            return;
+        }
         if (Arrays.stream(imageChunkBorders.rightBorder()).allMatch(value -> value == iterations)
                 && Arrays.stream(imageChunkBorders.topBorder()).allMatch(value -> value == iterations)
                 && Arrays.stream(imageChunkBorders.bottomBorder()).allMatch(value -> value == iterations)
                 && Arrays.stream(imageChunkBorders.leftBorder()).allMatch(value -> value == iterations)) {
             colorChunk(imageChunk, iterations);
-        } else if (Math.min(imageChunkBorders.rightBorder().length, imageChunkBorders.topBorder().length)
-                <= smallestChunkBorderSize) {
+        } else if (Math.min(imageChunkBorders.rightBorder().length, imageChunkBorders.topBorder().length) <= smallestChunkBorderSize) {
             computeAllPoints(imageChunk, imageChunkBorders);
         } else {
             divideAndCheckSubChunks(imageChunk, imageChunkBorders);
@@ -88,10 +94,9 @@ public class ParallelImageChunkGenerator {
         int[] topBorderRightPart = Arrays.copyOfRange(imageChunkBorders.topBorder(), divisionColumn - imageChunk.columnsStart(), imageChunkBorders.topBorder().length);
         int[] middleBorderRightPart = Arrays.copyOfRange(horizontalBorder, divisionColumn - imageChunk.columnsStart(), imageChunkBorders.topBorder().length);
         int[] bottomBorderRightPart = Arrays.copyOfRange(imageChunkBorders.bottomBorder(), divisionColumn - imageChunk.columnsStart(), imageChunkBorders.topBorder().length);
-        //TOP LEFT CHUNK
 
-
-        executorService.submit(()->computeForChunk(new ImageChunk(imageChunk.rowsStart(),
+        /* TOP LEFT CHUNK */
+        executorService.submit(() -> computeForChunk(new ImageChunk(imageChunk.rowsStart(),
                         divisionRow,
                         imageChunk.columnsStart(),
                         divisionColumn),
@@ -99,9 +104,8 @@ public class ParallelImageChunkGenerator {
                         topBorderLeftPart, middleBorderLeftPart)));
 
 
-        //TOP RIGHT CHUNK
-
-        executorService.submit(()->computeForChunk(new ImageChunk(imageChunk.rowsStart(),
+        /* TOP RIGHT CHUNK */
+        executorService.submit(() -> computeForChunk(new ImageChunk(imageChunk.rowsStart(),
                         divisionRow,
                         divisionColumn,
                         imageChunk.columnsEnd()),
@@ -109,9 +113,8 @@ public class ParallelImageChunkGenerator {
                         topBorderRightPart, middleBorderRightPart)));
 
 
-        //BOTTOM RIGHT CHUNK
-
-        executorService.submit(()->computeForChunk(new ImageChunk(divisionRow,
+        /* BOTTOM RIGHT CHUNK */
+        executorService.submit(() -> computeForChunk(new ImageChunk(divisionRow,
                         imageChunk.rowsEnd(),
                         divisionColumn,
                         imageChunk.columnsEnd()),
@@ -119,9 +122,8 @@ public class ParallelImageChunkGenerator {
                         middleBorderRightPart, bottomBorderRightPart)));
 
 
-        //BOTTOM LEFT CHUNK
-
-        executorService.submit(()->computeForChunk(new ImageChunk(divisionRow,
+        /* BOTTOM LEFT CHUNK */
+        executorService.submit(() -> computeForChunk(new ImageChunk(divisionRow,
                         imageChunk.rowsEnd(),
                         imageChunk.columnsStart(),
                         divisionColumn),
@@ -131,24 +133,6 @@ public class ParallelImageChunkGenerator {
 
     }
 
-    private void colorChunk(ImageChunk imageChunk, int iterations) {
-
-        int width = imageChunk.columnsEnd() - imageChunk.columnsStart();
-        int height = imageChunk.rowsEnd() - imageChunk.rowsStart();
-        int[] pixelBuffer = new int[width * height];
-        Arrays.fill(pixelBuffer, boundaryGradientColors.getGradientColorArgb(iterations));
-        if (Thread.currentThread().isInterrupted()) {return;}
-        Platform.runLater(() ->
-                writableImage.getPixelWriter().setPixels(
-                        imageChunk.columnsStart(), imageChunk.rowsStart(),
-                        width, height,
-                        PixelFormat.getIntArgbInstance(),
-                        pixelBuffer,
-                        0,
-                        width
-                ));
-        progressCounter.getAndAdd(width * height);
-    }
 
     private int[] getIterationsSatisfiedAtRow(int row, int columnsStart, int columnsEnd) {
         int[] borderValues = new int[columnsEnd - columnsStart];
@@ -159,31 +143,14 @@ public class ParallelImageChunkGenerator {
         return borderValues;
     }
 
-    private Complex getPointFromPixel(int row, int column) {
-        return topLeftPoint.add(new Complex(column, -row).multiply(unitsPerPixel));
-    }
 
     private int[] getIterationsSatisfiedAtColumn(int column, int rowsStart, int rowsEnd) {
-        if (Thread.currentThread().isInterrupted()) {return null;}
         int[] borderValues = new int[rowsEnd - rowsStart];
         for (int row = rowsStart; row < rowsEnd; row++) {
             Complex p = getPointFromPixel(row, column);
             borderValues[row - rowsStart] = getSatisfiedOperations(p);
         }
         return borderValues;
-    }
-
-
-    private int getSatisfiedOperations(Complex p) {
-        Complex z = firstExpressionCalculator.compute(Map.of("p", p));
-        for (int i = 0; i < iterations; i++) {
-            z = recurentExpressionCalculator.compute(Map.of("p", p, "z", z));
-            if (z.abs() > ApplicationSettings.MAXIMAL_EXPRESSION_VALUE) {
-                return i;
-            }
-
-        }
-        return iterations;
     }
 
     protected void computeAllPoints(ImageChunk imageChunk, ImageChunkBorders imageChunkBorders) {
@@ -209,6 +176,43 @@ public class ParallelImageChunkGenerator {
         colorChunk(imageChunk, iterationsSatisfied);
     }
 
+    private int getSatisfiedOperations(Complex p) {
+        Complex z = firstExpressionCalculator.compute(Map.of("p", p));
+        for (int i = 0; i < iterations; i++) {
+            z = recurentExpressionCalculator.compute(Map.of("p", p, "z", z));
+            if (z.abs() > ApplicationSettings.MAXIMAL_EXPRESSION_VALUE) {
+                return i;
+            }
+        }
+        return iterations;
+    }
+
+    private Complex getPointFromPixel(int row, int column) {
+        return topLeftPoint.add(new Complex(column, -row).multiply(unitsPerPixel));
+    }
+
+
+    private void colorChunk(ImageChunk imageChunk, int iterations) {
+
+        int width = imageChunk.columnsEnd() - imageChunk.columnsStart();
+        int height = imageChunk.rowsEnd() - imageChunk.rowsStart();
+        int[] pixelBuffer = new int[width * height];
+        Arrays.fill(pixelBuffer, boundaryGradientColors.getGradientColorArgb(iterations));
+        if (Thread.currentThread().isInterrupted()) {
+            return;
+        }
+        Platform.runLater(() ->
+                writableImage.getPixelWriter().setPixels(
+                        imageChunk.columnsStart(), imageChunk.rowsStart(),
+                        width, height,
+                        PixelFormat.getIntArgbInstance(),
+                        pixelBuffer,
+                        0,
+                        width
+                ));
+        progressCounter.getAndAdd(width * height);
+    }
+
     private void colorChunk(ImageChunk imageChunk, int[][] iterationsSatisfied) {
         int chunkWidth = imageChunk.columnsEnd() - imageChunk.columnsStart();
         int chunkHeight = imageChunk.rowsEnd() - imageChunk.rowsStart();
@@ -221,7 +225,9 @@ public class ParallelImageChunkGenerator {
                         iterationsSatisfied[row][column]);
             }
         }
-        if (Thread.currentThread().isInterrupted()) {return;}
+        if (Thread.currentThread().isInterrupted()) {
+            return;
+        }
         Platform.runLater(() -> writableImage.getPixelWriter().setPixels(
                 imageChunk.columnsStart(),
                 imageChunk.rowsStart(),
@@ -234,6 +240,4 @@ public class ParallelImageChunkGenerator {
         ));
         progressCounter.getAndAdd(chunkWidth * chunkHeight);
     }
-
-
 }

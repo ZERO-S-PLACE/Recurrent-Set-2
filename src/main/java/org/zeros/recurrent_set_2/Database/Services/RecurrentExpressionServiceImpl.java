@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.zeros.recurrent_set_2.Configuration.SettingsHolder;
 import org.zeros.recurrent_set_2.Database.Repositories.RecurrentExpressionRepository;
 import org.zeros.recurrent_set_2.Database.Repositories.ViewLocationRepository;
-import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorCreator;
+import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorCreatorImpl;
 import org.zeros.recurrent_set_2.Model.RecurrentExpression;
 import org.zeros.recurrent_set_2.Model.ViewLocation;
 
@@ -22,7 +22,7 @@ public class RecurrentExpressionServiceImpl implements RecurrentExpressionServic
 
     private final RecurrentExpressionRepository recurrentExpressionRepository;
     private final ViewLocationRepository viewLocationRepository;
-    private final ExpressionCalculatorCreator expressionCalculatorCreator;
+    private final ExpressionCalculatorCreatorImpl expressionCalculatorCreator;
     private final SettingsHolder settingsHolder;
 
     @Override
@@ -37,7 +37,6 @@ public class RecurrentExpressionServiceImpl implements RecurrentExpressionServic
         }
         validateEquations(recurrentExpression);
         recurrentExpressionRepository.save(recurrentExpression);
-
     }
 
     @Override
@@ -100,8 +99,13 @@ public class RecurrentExpressionServiceImpl implements RecurrentExpressionServic
     @Override
     @Transactional
     public void restorePredefinedExpressions() {
-        Set<RecurrentExpression> predefinedExpressions =Set.of(RecurrentExpression.MANDELBROT,
-                RecurrentExpression.JULIA_SET,RecurrentExpression.X_SHAPE,RecurrentExpression.X1_SHAPE,RecurrentExpression.X2_SHAPE,RecurrentExpression.X3_SHAPE);
+        Set<RecurrentExpression> predefinedExpressions =Set.of(
+                RecurrentExpression.MANDELBROT,
+                RecurrentExpression.JULIA_SET,
+                RecurrentExpression.X_SHAPE,
+                RecurrentExpression.X1_SHAPE,
+                RecurrentExpression.X2_SHAPE,
+                RecurrentExpression.X3_SHAPE);
         for(RecurrentExpression expression : predefinedExpressions) {
             if(recurrentExpressionRepository.findByName(expression.getName()).isPresent()) {
                 recurrentExpressionRepository.delete(recurrentExpressionRepository.findByName(expression.getName()).get());
@@ -137,12 +141,16 @@ public class RecurrentExpressionServiceImpl implements RecurrentExpressionServic
     @Override
     @Transactional
     public void deleteViewLocation(@NonNull Long expressionId, @NonNull Long viewId) {
+
         RecurrentExpression recurrentExpression=getExpressionById(expressionId);
+
         if(recurrentExpression.getDefaultViewLocation().getId().equals(viewId)) {
             throw new IllegalArgumentException("Cannot delete default view location");
         }
+
         ViewLocation viewLocation=viewLocationRepository.findById(viewId)
                 .orElseThrow(()->new IllegalArgumentException("View location doesn't exist"));
+
         recurrentExpression.getSavedViewLocations().remove(viewLocation);
         viewLocationRepository.delete(viewLocation);
     }

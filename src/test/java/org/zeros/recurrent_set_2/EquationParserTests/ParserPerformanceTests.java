@@ -4,8 +4,8 @@ import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculator;
-import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorCreator;
+import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorImpl;
+import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorCreatorImpl;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -14,7 +14,7 @@ import java.util.Set;
 @SpringBootTest
 public class ParserPerformanceTests {
     @Autowired
-    private ExpressionCalculatorCreator creator;
+    private ExpressionCalculatorCreatorImpl creator;
 
 
 @Test
@@ -22,7 +22,7 @@ public class ParserPerformanceTests {
 
     long start = System.currentTimeMillis();
     Set<Complex> customCalculatorResults=new HashSet<>();
-    ExpressionCalculator expressionCalculator=creator.getExpressionCalculator(
+    ExpressionCalculatorImpl expressionCalculator=creator.getExpressionCalculator(
             "5 1.21*aPIex+xa/21ei+sin(5x)",
             Set.of("a"," x"));
 
@@ -79,7 +79,7 @@ public class ParserPerformanceTests {
         long end2 = System.currentTimeMillis();
         System.out.println("Elapsed time -default parsed: " + (end2 - start2));
 
-        ExpressionCalculator expressionCalculator=creator.getExpressionCalculator(
+        ExpressionCalculatorImpl expressionCalculator=creator.getExpressionCalculator(
                 "p+z^2",
                 Set.of("p"," z"));
         long start = System.currentTimeMillis();
@@ -109,7 +109,7 @@ public void testParserPerformance3() {
 
     long start = System.currentTimeMillis();
     Set<Complex> customCalculatorResults=new HashSet<>();
-    ExpressionCalculator expressionCalculator=creator.getExpressionCalculator(
+    ExpressionCalculatorImpl expressionCalculator=creator.getExpressionCalculator(
             "5^(3x)-(2i+a)/sin(16ax)",
             Set.of("a"," x"));
 

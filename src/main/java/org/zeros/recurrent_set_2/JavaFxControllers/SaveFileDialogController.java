@@ -40,10 +40,10 @@ public class SaveFileDialogController {
         this.imageSaver = imageSaver;
         this.imageGenerationController = imageGenerationController;
         this.viewFactory = viewFactory;
-        Platform.runLater(() -> {
-        configureFileChooser();
-        initializeStage();
-        });
+        //Platform.runLater(() -> {
+       // configureFileChooser();
+       // initializeStage();
+       // });
     }
 
 

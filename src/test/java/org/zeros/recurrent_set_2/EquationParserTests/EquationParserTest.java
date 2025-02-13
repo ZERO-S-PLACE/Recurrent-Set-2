@@ -9,7 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.zeros.recurrent_set_2.EquationParser.EquationTreeNode.ConstantNode;
 import org.zeros.recurrent_set_2.EquationParser.EquationTreeNode.EquationTreeNode;
 import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculator;
-import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorCreator;
+import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorImpl;
+import org.zeros.recurrent_set_2.EquationParser.ExpressionCalculatorCreatorImpl;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -21,7 +22,7 @@ public class EquationParserTest {
 
     private double maxDivergence= 10E-7;
     @Autowired
-    private ExpressionCalculatorCreator creator;
+    private ExpressionCalculatorCreatorImpl creator;
     @BeforeEach
     public void setUp() {
 
@@ -125,7 +126,7 @@ public class EquationParserTest {
 
     @Test
     public void testEquationParser_TreeSimplificationTest1() throws NoSuchFieldException, IllegalAccessException {
-        Field field = ExpressionCalculator.class.getDeclaredField("equationTree");
+        Field field = ExpressionCalculatorImpl.class.getDeclaredField("equationTree");
         field.setAccessible(true);
         ExpressionCalculator expressionCalculator=creator.getExpressionCalculator(
                 "5/32-44*(4^3)+(26+i)+2+1+2+1-2-1-2-1",

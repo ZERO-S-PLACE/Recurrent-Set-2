@@ -16,7 +16,9 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class ImageSaver {
+
     private final SettingsHolder settingsHolder;
+
     public void saveAsPng(Image image,File file ) {
         try {
             BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);

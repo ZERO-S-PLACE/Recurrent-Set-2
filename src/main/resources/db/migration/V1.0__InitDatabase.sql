@@ -13,7 +13,6 @@ CREATE TABLE application_settings
     min_chunk_border_size     INT                   NOT NULL,
     max_chunk_border_size     INT                   NOT NULL,
     default_rescale_on_scroll DOUBLE                NOT NULL
-
 );
 
 CREATE TABLE color_settings
@@ -56,8 +55,6 @@ CREATE TABLE expression_locations
     location_id   BIGINT NOT NULL,
     CONSTRAINT PRIMARY KEY (expression_id, location_id)
 );
-
-
 
 ALTER TABLE expression_locations
     ADD CONSTRAINT UNIQUE (location_id);

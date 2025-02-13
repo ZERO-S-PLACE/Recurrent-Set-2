@@ -34,7 +34,6 @@ public class EquationTreeSimplifierMaximal implements EquationTreeSimplifier {
                 return node;
             }
             return includeInVariable(node);
-
         }
         return node;
     }
@@ -60,8 +59,8 @@ public class EquationTreeSimplifierMaximal implements EquationTreeSimplifier {
                     return includeMultiplier(variableNode, constantNode.getSolution(new HashMap<>()));
                 }
                 case PowerCalculation ignored -> {
-                    if(variableNode.getOffset()==null){
-                        return includePower(variableNode,constantNode.getSolution(new HashMap<>()));
+                    if (variableNode.getOffset() == null) {
+                        return includePower(variableNode, constantNode.getSolution(new HashMap<>()));
                     }
                     return node;
                 }
@@ -74,21 +73,18 @@ public class EquationTreeSimplifierMaximal implements EquationTreeSimplifier {
     }
 
     private EquationTreeNode includeOffset(VariableNode variableNode, Complex offset) {
-
-
         variableNode.setOffset(offset);
         return variableNode;
     }
+
     private EquationTreeNode includeMultiplier(VariableNode variableNode, Complex multiplier) {
         variableNode.setMultiplier(multiplier);
         return variableNode;
     }
+
     private EquationTreeNode includePower(VariableNode variableNode, Complex power) {
         variableNode.setPower(power);
         return variableNode;
     }
-
-
-
 
 }
