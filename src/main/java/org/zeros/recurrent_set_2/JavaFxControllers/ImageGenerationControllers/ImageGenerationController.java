@@ -82,7 +82,7 @@ public class ImageGenerationController {
             Point2D offset = newPosition.subtract(referencePointOnCanvas);
             referencePointOnCanvas = null;
             applyOffsetToExistingImage(offset);
-            generateMissingParts(offset);
+            generateMissingParts();
         }
     }
 
@@ -106,7 +106,7 @@ public class ImageGenerationController {
         regenerateImage();
     }
 
-    private void generateMissingParts(Point2D offset) {
+    private void generateMissingParts() {
         //TODO
         regenerateImage();
     }

@@ -32,8 +32,10 @@ public class StartConfig implements CommandLineRunner {
         settingsHolder.setColorSettings(colorSettingsService.getDefaultColorSettings());
         settingsHolder.setApplicationSettings(applicationSettingsService.getDefaultSettings());
         settingsHolder.setRecurrentExpression(recurrentExpressionService.getAllExpressions().stream()
-                .filter(recurrentExpression -> recurrentExpression.getName().contains("X1 Shape")).findFirst()
-                .orElse(recurrentExpressionService.getAllExpressions().stream().findFirst().orElse(RecurrentExpression.X_SHAPE)));
+                .filter(recurrentExpression -> recurrentExpression.getName().contains("zzzzzzzzz")).findFirst()
+                .orElse(
+                        //recurrentExpressionService.getAllExpressions().stream().findFirst().orElse(
+                        RecurrentExpression.X5_SHAPE));
     }
 
     private void restoreDefaultValuesIfNotPresent() {

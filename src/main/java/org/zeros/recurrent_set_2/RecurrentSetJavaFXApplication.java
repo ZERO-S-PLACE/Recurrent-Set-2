@@ -1,6 +1,7 @@
 package org.zeros.recurrent_set_2;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -33,7 +34,9 @@ public class RecurrentSetJavaFXApplication extends Application {
 	@Override
 	public void start(Stage primaryStage) {
 		log.atInfo().log("Starting Recurrent Set 2 Application -Java Fx");
+		Platform.runLater(()->{
 		context.getBean(ViewFactory.class).showNewWindow();
+	});
 	}
 }
 
